@@ -1,0 +1,136 @@
+/* ------- style.css ------ */
+
+* {
+    font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text", "Times New Roman", serif;
+}
+
+body {
+    margin: 0 auto;
+    padding: 20px;
+    max-width: 1200px;
+    height:100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #EFE4CB; 
+}
+
+.container {
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    min-height: 100px;
+}
+
+.center-item{
+    
+    margin: auto; 
+}
+
+.left-item{
+    left:20px; 
+}
+
+.topnav {
+    overflow: hidden;
+    width:100%; 
+}
+
+.topnav a {
+    color: #000;
+    text-align:center; 
+    padding: 30px 30px; 
+    text-decoration:none;
+    font-size: 24px; 
+}
+
+.save-btn{
+    background-color: #C6DBEF;
+    position: fixed;
+    bottom:20px; 
+    left:60px; 
+    z-index:1000; 
+    letter-spacing: 1.5px;
+    font-size: medium;
+    align-self: center;
+}
+
+.save-btn:hover {
+    background-color: #92afca;
+}
+
+.save-btn:active {
+    transform: scale(0.98);
+}
+
+.download-btn{
+    background-color: #DCCBFF;
+    position: fixed;
+    bottom:20px; 
+    right:60px; 
+    z-index:1000; 
+    letter-spacing: 1.5px;
+    font-size: medium;
+    align-self: center;
+}
+
+.download-btn:hover {
+    background-color: #ad90e7;
+}
+
+.download-btn:active {
+    transform: scale(0.98);
+}
+
+.right_hand {
+    display: flex;
+    justify-content: center;
+    min-height:100vh;
+    position: center; 
+}
+
+.right_hand path:hover {
+    fill: #DCCBFF;
+    pointer-events: all;
+}
+
+.hidden {
+    display:none; 
+}
+
+.show {
+    display: block;
+}
+
+.circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    align-items: center;
+    right: 30px;
+    margin-top: 10px;
+    margin-left:auto;
+}
+
+#color-one {
+    background-color: #F599C6; 
+}
+
+#color-two {
+    background-color: #7DCCAD; 
+}
+
+#color-three {
+    background-color: #4D6787;
+}
+
+#color-four {
+    background-color: #9CC6DB;
+}
+
+#color-five {
+    background-color: #ad90e7;
+}
