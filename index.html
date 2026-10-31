@@ -1,55 +1,47 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Home</title>
-    <link rel="stylesheet" href="style.css" type="text/css" />
+    <title>Right Hand</title>
 </head>
 
 <body>
-    <script id="replace_with_navbar" src="nav.js"></script>
-
     <div class="container">
+        <script id="replace_with_navbar" src="nav.js"></script>
 
-        <div class="left-item">
-            <div class="circle" id="color-one"></div>
-            <div class="circle" id="color-two"></div>
-            <div class="circle" id="color-three"></div>
-            <div class="circle" id="color-four"></div>
-            <div class="circle" id="color-five"></div>
-            <input type="color" id="color-wheel" class="circle">
+        <div class="page-header">
+            <a href="index.html"></a>
+            <p>Title</p>
+            <small>X/206</small>
         </div>
 
-
-        <div class="center-item">
-
+        <div class="stage">
             <svg xmlns="http://www.w3.org/2000/svg" width="298" height="796" fill="none" viewBox="0 0 298 796">
                 <g id="Full Skeleton">
-                    <ellipse id="Right_Foot" cx="102.698" cy="742.845" fill="#d9d9d9" rx="31.5" ry="43"
+                    <ellipse id="Right_Foot" cx="102.698" cy="742.845" fill="#EFE4CB" rx="31.5" ry="43"
                         transform="rotate(22.791 102.698 742.845)" />
-                    <ellipse id="Left_Foot" cx="194.047" cy="742.771" fill="#d9d9d9" rx="31.5" ry="43"
+                    <ellipse id="Left_Foot" cx="194.047" cy="742.771" fill="#EFE4CB" rx="31.5" ry="43"
                         transform="rotate(-28.117 194.047 742.771)" />
-                    <path id="Right_Leg" fill="#d9d9d9" d="M73 368.473h24.212v328.258H73z"
+                    <path id="Right_Leg" fill="#EFE4CB" d="M73 368.473h24.212v328.258H73z"
                         transform="rotate(-5.862 73 368.473)" />
-                    <path id="Left_Leg" fill="#d9d9d9" d="M190 368h24.212v328.258H190z"
+                    <path id="Left_Leg" fill="#EFE4CB" d="M190 368h24.212v328.258H190z"
                         transform="rotate(3.706 190 368)" />
-                    <ellipse id="Left_Hand" cx="253.5" cy="407" fill="#d9d9d9" rx="31.5" ry="43" />
-                    <path id="Spine" fill="#d9d9d9" d="M151 214h-9.5L134 329h25z" />
-                    <path id="Pelvis" fill="#d9d9d9"
+                    <ellipse id="Left_Hand" cx="253.5" cy="407" fill="#EFE4CB" rx="31.5" ry="43" />
+                    <path id="Spine" fill="#EFE4CB" d="M151 214h-9.5L134 329h25z" />
+                    <path id="Pelvis" fill="#EFE4CB"
                         d="m106.5 308.5-27 22v19L97 360l9.5 38.5L146 406l35.5-7.5 2-27 22-15 5-30.5-33-17.5-17 24h-26z" />
                     <ellipse id="Right_Hand" cx="35.5" cy="406" fill="#EFE4CB" rx="31.5" ry="43" />
-                    <path id="Right_Arm" fill="#d9d9d9" d="M0 0h37.351v208.266H0z"
+                    <path id="Right_Arm" fill="#EFE4CB"" d="M0 0h37.351v208.266H0z"
                         transform="rotate(-173.613 41.805 72.477)scale(1 -1)" />
-                    <path id="Left_Arm" fill="#d9d9d9" d="M215 152.155h37.351v208.266H215z"
+                    <path id="Left_Arm" fill="#EFE4CB"" d="M215 152.155h37.351v208.266H215z"
                         transform="rotate(-6.387 215 152.155)" />
-                    <path id="Rib" fill="#d9d9d9"
+                    <path id="Rib" fill="#EFE4CB"
                         d="m71 226.5 17-77h122l10 117-23.5 17.5-39.5-41-6-32h-4.5l-5.5 1-4 35.5-55 45z" />
-                    <path id="shoulder_mask" fill="#d9d9d9" d="M54 134h190v11H54z" />
-                    <circle id="Skull" cx="146" cy="52" r="52" fill="#d9d9d9" />
-                    
+                    <path id="shoulder" fill="#EFE4CB" d="M54 134h190v11H54z" />
+                    <circle id="Skull" cx="146" cy="52" r="52" fill="#EFE4CB" />
+
 
                     <g id="Right Leg" stroke="#000" stroke-width=".3">
                         <path id="femur"
@@ -203,7 +195,7 @@
                         <path id="scapula" stroke="#000" stroke-width=".3"
                             d="M68.46 135.721c1.073-.462 4.378-1.958 6.687-2.172 1.208-.112 1.918-.238 3.108 0 1.437.287 1.969 1.277 3.402 1.582 1.334.284 2.27-.383 3.492 0 2.293.719 3.666.269 5.99 0 2.56-.296 6.406-1.582 6.406-1.582s3.942-.809 5.906-2.32c.909-.7 1.104-1.47 2.078-2.076.744-.462 1.255-.548 2.082-.837.863-.301 2.246-.665 2.246-.665m-26.372 49.083s-3.124-2.668-5.23-4.243c-2.067-1.545-4.098-2.867-5.441-3.75-1.515-.996-2.958-.454-4.354-1.611-.574-.475-.928-.755-1.29-1.406-.813-1.461.067-2.61.175-4.278.174-2.664.518-4.136.704-6.799l.01-.144c.143-2.036.226-3.224.225-5.306 0-2.113-.235-5.406-.235-5.406" />
                     </g>
-                    <g id="Right Shoulder_2">
+                    <g id="Left Shoulder">
                         <path id="scapula_2" stroke="#000" stroke-width=".3"
                             d="M223.225 135.287c-1.072-.462-3.412-1.368-5.72-1.582-1.209-.112-1.919-.238-3.109 0-1.437.287-1.969 1.277-3.402 1.582-1.334.284-2.269-.383-3.492 0-2.293.719-5.99 0-5.99 0l-6.405-1.582s-3.943-.809-5.907-2.32c-.909-.7-1.053-1.561-2.078-2.076-.35-.175-.939-.351-.939-.351l-2.224-1.15m25.623 48.584c1.801-1.039 5.675-3.342 7.336-4.593 1.284-.967 1.576-2.019 2.919-2.902 1.515-.996 3.578-1.373 4.354-1.611.713-.218.928-.755 1.291-1.406.812-1.462-.176-4.279-.176-4.279l-.704-6.798-.235-5.45.235-5.406" />
                     </g>
@@ -552,10 +544,21 @@
                         </g>
                     </g>
                 </g>
-                
-            </svg>
 
+            </svg>
         </div>
+
+        <div class="colors">
+            <div class="circle" id="color-one"></div>
+            <div class="circle" id="color-two"></div>
+            <div class="circle" id="color-three"></div>
+            <div class="circle" id="color-four"></div>
+            <div class="circle" id="color-five"></div>
+            <div class="circle" id="color-six"></div>
+        </div>
+
+        <button class="hide-btn">Hide</button>
+        <button class="download-btn">Download</button>
     </div>
     <script src="index.js"></script>
 </body>

@@ -8,4 +8,3 @@ document.addEventListener('click', (event) => {
     }
 });
 
-// Need to make sure everything is the same. 

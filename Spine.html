@@ -4,15 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spine</title>
-    <link rel="stylesheet" href="style.css" type="text/css" />
+    <title>Right Hand</title>
 </head>
 
 <body>
-    <script id="replace_with_navbar" src="nav.js"></script>
+    <div class="container">
+        <script id="replace_with_navbar" src="nav.js"></script>
 
-    <div class="center-item">
-        <div class="svg-frame">
+        <div class="page-header">
+            <a href="index.html">Back</a>
+            <p>Right Hand</p>
+            <small>26/206</small>
+        </div>
+
+        <div class="stage">
             <svg xmlns="http://www.w3.org/2000/svg" width="182" height="817" fill="none" viewBox="0 0 182 817">
                 <g id="Spine" stroke="#000" stroke-width=".5">
                     <path id="coccyx"
@@ -124,8 +129,18 @@
                 </g>
             </svg>
         </div>
-    </div>
+        <div class="colors">
+            <div class="circle" id="color-one"></div>
+            <div class="circle" id="color-two"></div>
+            <div class="circle" id="color-three"></div>
+            <div class="circle" id="color-four"></div>
+            <div class="circle" id="color-five"></div>
+            <div class="circle" id="color-six"></div>
+        </div>
 
+        <button class="hide-btn">Hide</button>
+        <button class="download-btn">Download</button>
+    </div>
 </body>
 
 </html>
