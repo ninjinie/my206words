@@ -28,6 +28,7 @@ body {
 .center-item{
     
     margin: auto; 
+    padding:50px; 
 }
 
 .left-item{
@@ -37,12 +38,13 @@ body {
 .topnav {
     overflow: hidden;
     width:100%; 
+    height: 60px;
 }
 
 .topnav a {
     color: #000;
     text-align:center; 
-    padding: 30px 30px; 
+    padding: 20px 30px; 
     text-decoration:none;
     font-size: 24px; 
 }
@@ -97,13 +99,6 @@ body {
     pointer-events: all;
 }
 
-.hidden {
-    display:none; 
-}
-
-.show {
-    display: block;
-}
 
 .circle {
     width: 24px;
@@ -133,4 +128,69 @@ body {
 
 #color-five {
     background-color: #ad90e7;
+}
+
+.svg-frame {
+  width: 100%;
+  max-width: 380px;
+  height: 50vh;          /* or aspect-ratio: 4 / 3; */
+  margin: 0 auto 6vh; 
+  position: relative;
+  top: -3vh; 
+  display: flex;
+}
+
+.svg-frame svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.about-section {
+    padding: 100px; 
+    text-align: justify; 
+    font-size: 18px;
+}
+
+a {
+    text-decoration: none;
+}
+
+.contact-section {
+    padding:100px; 
+}
+
+.large-input {
+    width: 100%;       /* Makes it fill the container's width (or use px, rem, etc.) */
+    max-width: 1000px;  /* Prevents it from getting too wide on large screens */
+    height: 100px;      /* Increases the vertical height */
+    padding: 10px;     /* Adds space inside the box so text isn't cramped */
+    font-size: 16px;   /* Larger text scales the box naturally and improves UX */
+    box-sizing: border-box; 
+    vertical-align: top;
+    padding-top:0; 
+    line-height: 1;
+}
+
+img {
+    width: 100px;
+    height: auto;
+    mix-blend-mode: multiply;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.column {
+  float: left;
+  width: 33.33%;
+  padding: 5px;
+}
+
+/* Clearfix (clear floats) */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
 }

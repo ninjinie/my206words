@@ -2,6 +2,8 @@ const input = document.getElementById('inputField');
 const words = new Map();  
 let selectedBone = null; 
 
+input.style.display = 'none'; 
+
 // 1) Click on a bone: only remember which one and show the input 
 document.addEventListener('click', (event) => {
     if(event.target.matches('path')){
@@ -13,13 +15,18 @@ document.addEventListener('click', (event) => {
 
 // 2) Attach the Enter listener Once 
 input.addEventListener('keydown', (event) => {
-    if (event.key != 'Enter') return; 
+    if (event.key != 'Enter') return; // if event key is not enter return 
 
     const word = input.value.trim(); 
     words.set(selectedBone, word); 
     console.log(words); 
 
     input.value = ''; 
-    input.value.display = 'none'; 
+    input.style.display = 'none'; 
     selectedBone = null; 
 }); 
+
+ 
+
+
+
