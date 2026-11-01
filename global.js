@@ -4,18 +4,22 @@ const input = document.getElementById('inputField');
 const count = document.getElementById('count');
 const settings = document.getElementById('textSettings');
 const hideBtn = document.querySelector('.hide-btn');
+const undoBtn = document.querySelector('.undo-btn');
 const downloadBtn = document.querySelector('.download-btn');
+const backLink = document.querySelector('.page-header a');
 const dialog = document.getElementById('downloadDialog');
 const bones = svg.querySelectorAll('path');
-const SIDE_PADDING = 80;         // extra space on EACH side of the image, in SVG units
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MIN_FONT = 6;              // smallest word size, so tiny bones still show their word
 const PAPER = '#EFE4CB';         // background color of PNG/JPG downloads
 const IMAGE_SCALE = 4;           // PNG/JPG are drawn 4x bigger than the SVG so they stay sharp
+const SIDE_PADDING = 80;         // extra space on EACH side of a downloaded image, in SVG units
+const MAX_UNDO = 100;            // how many steps Undo remembers
 const words = new Map();         // bone id -> full word
 const labels = new Map();        // bone id -> text element
 const hidden = new Set();        // bone ids whose word is hidden (only the first letter shows)
+const undoStack = [];            // each entry is a function that reverts one change
 let selectedBone = null;         // bone the input is open for
 let styledLabel = null;          // word the settings menu is open for
 let color = null;                // paint color (null = not painting)
@@ -61,6 +65,72 @@ bones.forEach(bone => {
 
 count.textContent = '0/' + bones.length;
 
+// ---------- back: return to the page you came from ----------
+backLink.addEventListener('click', (event) => {
+    if (document.referrer.startsWith(location.origin)) {   // we arrived from one of our own pages
+        event.preventDefault();
+        history.back();
+    }                                                      // otherwise the normal link (index.html) runs
+});
+
+// ---------- undo ----------
+function pushUndo(step) {
+    undoStack.push(step);
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+function undo() {
+    const step = undoStack.pop();
+    if (step) step();
+}
+
+function setOrRemove(el, name, value) {
+    if (value === null) el.removeAttribute(name);
+    else el.setAttribute(name, value);
+}
+
+// a copy of everything that can change about one word
+function snapshotLabel(id) {
+    const l = labels.get(id);
+    return {
+        word: words.get(id),
+        hidden: hidden.has(id),
+        text: l.textContent,
+        style: l.getAttribute('style'),
+        transform: l.getAttribute('transform'),
+        x: l.getAttribute('x'),
+        y: l.getAttribute('y'),
+        data: { ...l.dataset }
+    };
+}
+
+function restoreLabel(id, snap) {
+    const l = labels.get(id);
+
+    if (snap.word === undefined) words.delete(id);
+    else words.set(id, snap.word);
+    if (snap.hidden) hidden.add(id);
+    else hidden.delete(id);
+
+    l.textContent = snap.text;
+    setOrRemove(l, 'style', snap.style);
+    setOrRemove(l, 'transform', snap.transform);
+    l.setAttribute('x', snap.x);
+    l.setAttribute('y', snap.y);
+    for (const key of Object.keys(l.dataset)) delete l.dataset[key];
+    Object.assign(l.dataset, snap.data);
+
+    count.textContent = words.size + '/' + bones.length;
+}
+
+// call this right BEFORE changing a word, so Undo can put it back
+function rememberLabel(id) {
+    const snap = snapshotLabel(id);
+    pushUndo(() => restoreLabel(id, snap));
+}
+
+undoBtn.addEventListener('click', undo);
+
 // ---------- the word input (with the settings menu above it) ----------
 function openInput(bone) {
     const b = bone.getBoundingClientRect();
@@ -90,6 +160,8 @@ function closeInput(save) {
     if (!save) return;
 
     if (word === (words.get(id) || '')) return;     // nothing changed: keep the word's size and tilt
+
+    rememberLabel(id);                              // so Undo can revert this word
 
     if (word) {
         words.set(id, word);
@@ -203,19 +275,27 @@ function tilt(degrees) {
     applyRotation(styledLabel);
 }
 
-settings.querySelector('.font-size').addEventListener('click', () => {
+// wires one settings button: remember the word for Undo, then run the change
+function onSettings(selector, action) {
+    settings.querySelector(selector).addEventListener('click', () => {
+        rememberLabel(styledLabel.dataset.bone);
+        action();
+    });
+}
+
+onSettings('.font-size', () => {
     const fit = parseFloat(styledLabel.dataset.fit);
     const now = parseFloat(styledLabel.style.fontSize);
     styledLabel.style.fontSize = (now >= fit * 1.5 ? fit * 0.6 : now + fit * 0.2) + 'px';
 });
-settings.querySelector('.letter-spacing').addEventListener('click', () => cycle('letterSpacing', ['0px', '1px', '2px', '3px']));
-settings.querySelector('.bold').addEventListener('click', () => cycle('fontWeight', ['bold', 'normal']));
-settings.querySelector('.italic').addEventListener('click', () => cycle('fontStyle', ['italic', 'normal']));
-settings.querySelector('.underline').addEventListener('click', () => {
+onSettings('.letter-spacing', () => cycle('letterSpacing', ['0px', '1px', '2px', '3px']));
+onSettings('.bold', () => cycle('fontWeight', ['bold', 'normal']));
+onSettings('.italic', () => cycle('fontStyle', ['italic', 'normal']));
+onSettings('.underline', () => {
     styledLabel.style.fill = color || '#000';              // paints the word with the selected color
 });
-settings.querySelector('.tilt-left').addEventListener('click', () => tilt(-5));
-settings.querySelector('.tilt-right').addEventListener('click', () => tilt(5));
+onSettings('.tilt-left', () => tilt(-5));
+onSettings('.tilt-right', () => tilt(5));
 
 // ---------- colors ----------
 function setColor(value, circle) {
@@ -230,6 +310,14 @@ function setColor(value, circle) {
 }
 
 function paintBone(bone) {
+    const oldFill = bone.style.fill;                       // saved so Undo can restore it
+    const oldPaint = bone.dataset.paint;
+    pushUndo(() => {
+        bone.style.fill = oldFill;
+        if (oldPaint === undefined) delete bone.dataset.paint;
+        else bone.dataset.paint = oldPaint;
+    });
+
     if (bone.dataset.paint === color) {                    // same color again = remove it
         bone.style.fill = '';
         delete bone.dataset.paint;
@@ -264,6 +352,7 @@ function setHiding(on) {
 
 function toggleHidden(id) {
     if (!words.has(id)) return;                            // nothing to hide on an empty bone
+    rememberLabel(id);
     if (hidden.has(id)) hidden.delete(id);
     else hidden.add(id);
     labels.get(id).textContent = shown(id);                // first letter only, or the full word again
@@ -382,10 +471,17 @@ stage.addEventListener('click', (event) => {
     openInput(bone);                                       // writing mode: input (+ menu if written)
 });
 
-// ---------- Esc: leave whatever you're in ----------
+// ---------- keyboard ----------
 document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    closeInput(false);        // cancel, don't save
-    setColor(null);
-    setHiding(false);
+    if (event.key === 'Escape') {                          // Esc: leave whatever you're in
+        closeInput(false);                                 // cancel, don't save
+        setColor(null);
+        setHiding(false);
+        return;
+    }
+
+    const isUndo = (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
+    if (!isUndo || event.target === input) return;         // inside the input, Cmd+Z undoes typing as usual
+    event.preventDefault();
+    undo();
 });
