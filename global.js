@@ -195,12 +195,28 @@ function placeWord(label, bone, word) {
     label.textContent = word;              // measure with the FULL word, even if it ends up hidden
     if (!word) return;
 
-    // 1) sample 60 points around the outline
+    // 1) sample the outline, then split it into separate pieces.
+    //    Neighbouring samples are never further apart than `step` unless the path jumped to a new piece.
     const total = bone.getTotalLength();
-    const pts = [];
-    for (let i = 0; i < 60; i++) pts.push(bone.getPointAtLength(total * i / 60));
+    const N = 400;
+    const step = total / N;
+    const all = [];
+    for (let i = 0; i < N; i++) all.push(bone.getPointAtLength(total * i / N));
 
-    // 2) find the two points furthest apart
+    const pieces = [[all[0]]];
+    for (let i = 1; i < N; i++) {
+        const jumped = Math.hypot(all[i].x - all[i - 1].x, all[i].y - all[i - 1].y) > step * 1.5;
+        if (jumped) pieces.push([]);
+        pieces[pieces.length - 1].push(all[i]);
+    }
+
+    // 2) use the biggest piece (the one with the longest outline); the user can drag the word to another
+    const main = pieces.reduce((best, p) => (p.length > best.length ? p : best));
+    const stride = Math.max(1, Math.floor(main.length / 80));
+    let pts = main.filter((_, i) => i % stride === 0);
+    if (pts.length < 3) pts = all.filter((_, i) => i % 7 === 0);     // tiny path: fall back to the whole outline
+
+    // 3) find the two points furthest apart
     let a = pts[0], b = pts[1], longest = 0;
     for (const p of pts) {
         for (const q of pts) {
@@ -209,18 +225,18 @@ function placeWord(label, bone, word) {
         }
     }
 
-    // 3) angle of that line, flipped so text is never upside down
+    // 4) angle of that line, flipped so text is never upside down
     let angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     if (angle > 90) angle -= 180;
     if (angle < -90) angle += 180;
 
-    // 4) thickness: how far the outline reaches sideways from the line
+    // 5) thickness: how far the outline reaches sideways from the line
     const nx = -(b.y - a.y) / longest;
     const ny = (b.x - a.x) / longest;
     const side = pts.map(p => (p.x - a.x) * nx + (p.y - a.y) * ny);
     const thickness = Math.max(...side) - Math.min(...side);
 
-    // 5) font size: fit the line and the thickness, but never below MIN_FONT
+    // 6) font size: fit the line and the thickness, but never below MIN_FONT
     label.style.fontSize = '10px';
     const widthPerPx = label.getComputedTextLength() / 10;
     const fitted = Math.min(longest * 0.5 / widthPerPx, thickness * 0.3);
@@ -228,9 +244,26 @@ function placeWord(label, bone, word) {
     label.style.fontSize = size + 'px';
     label.dataset.fit = size;
 
-    // 6) centre it on the line and rotate (plus any tilt the user added)
-    const cx = (a.x + b.x) / 2;
-    const cy = (a.y + b.y) / 2;
+    // 7) centre on the line; if a curved piece puts that centre outside the bone, use the nearest point inside it
+    let cx = (a.x + b.x) / 2;
+    let cy = (a.y + b.y) / 2;
+    if (!bone.isPointInFill(new DOMPoint(cx, cy))) {
+        const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs);
+        const y0 = Math.min(...ys), y1 = Math.max(...ys);
+        let bestDist = Infinity;
+        for (let i = 0; i <= 30; i++) {
+            for (let j = 0; j <= 30; j++) {
+                const px = x0 + (x1 - x0) * i / 30;
+                const py = y0 + (y1 - y0) * j / 30;
+                const d = Math.hypot(px - cx, py - cy);
+                if (d < bestDist && bone.isPointInFill(new DOMPoint(px, py))) {
+                    bestDist = d; cx = px; cy = py;
+                }
+            }
+        }
+    }
+
     label.setAttribute('x', cx);
     label.setAttribute('y', cy);
     label.dataset.angle = angle;

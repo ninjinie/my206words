@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Right Hand</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap">
 </head>
 
 <body>
@@ -14,7 +15,7 @@
         <div class="page-header">
             <a href="index.html">Back</a>
             <p>Right Hand</p>
-            <small>26/206</small>
+            <small id="count"></small>
         </div>
 
         <div class="stage">
@@ -28,21 +29,47 @@
                         d="M230.663 518.263c1.783-1.337 3.152-1.668 5.363-1.95 2.148-.275 3.543-.386 5.525.487 1.651.727 2.288 1.661 3.575 2.925 2.2 2.161 2.409 4.287 4.712 6.338 1.749 1.556 2.926 2.239 5.038 3.25 1.467.702 2.3 1.166 3.9 1.462 2.701.501 4.506-.041 6.987 1.138 2.259 1.073 2.956 1.481 3.738 3.25.744 1.683.25 2.889 0 4.712-.233 1.693-.23 2.778-1.138 4.225-1.291 2.058-3.164 2.088-5.2 3.413-2.656 1.727-3.934 3.09-6.825 4.387-2.712 1.217-4.581.939-7.312 2.113-2.271.976-4.353.911-5.525 3.087-1.138 2.113-3.364 5.845-5.525 9.588-4.365 7.559-6.981 11.702-11.213 19.337-3.936 7.102-5.994 11.165-9.75 18.363-4.582 8.781-7.263 13.652-11.537 22.587-3.873 8.097-5.893 12.711-9.425 20.963-4.281 9.999-6.344 15.745-10.4 25.837-4.258 10.596-6.636 16.54-10.888 27.138-4.76 11.866-7.317 18.565-12.187 30.387-4.355 10.571-7.072 16.383-11.375 26.975-3.722 9.16-5.449 14.441-9.263 23.563-4.941 11.818-8.326 18.176-13.487 29.9-4.261 9.678-6.344 15.238-10.725 24.862-3.317 7.286-5.083 11.422-8.775 18.525-3.565 6.859-6.291 10.313-9.75 17.225-2.466 4.927-3.788 7.729-5.85 12.838-.865 2.142-1.465 3.307-2.113 5.525-1.097 3.756-1.944 6.029-1.462 9.912.151 1.223.616 1.856.65 3.088.039 1.418.046 2.338-.65 3.575-.797 1.416-1.76 1.952-3.25 2.6-1.301.566-2.158.722-3.575.65-1.107-.057-2.267-1.642-2.763-.65-.487.975-.047 2.526-.487 4.062-.508 1.774-.66 3.087-2.113 4.225-.918.72-1.6 1.047-2.762 1.138-1.243.097-2.112-.036-3.088-.813-.911-.725-1.07-1.503-1.462-2.6-1.151-3.211 1.58-7.312.65-8.937-.65-1.135-6.338-1.788-6.338-3.25 0-1.463.264-1.877.325-3.088.058-1.141.157-1.793 0-2.925-.293-2.113-2.532-4.019-1.95-5.037.65-1.138 1.796-1.97 2.925-3.25 2.473-2.803 3.919-4.333 6.175-7.313 3.752-4.955 5.412-8.065 8.45-13.487 5.346-9.539 7.016-15.557 11.538-25.513 4.615-10.161 7.452-15.748 11.862-26 4.839-11.247 7.091-17.744 11.7-29.087 4.468-10.994 7.294-17.03 11.538-28.113 3.69-9.635 5.406-15.168 8.937-24.862 3.079-8.452 4.787-13.197 7.963-21.613 3.17-8.402 4.9-13.133 8.287-21.45 2.993-7.347 5.08-11.297 7.963-18.687 3.515-9.013 4.849-14.298 8.125-23.4 3.441-9.561 5.08-15.044 9.1-24.375 3.2-7.43 5.635-11.303 8.937-18.688 3.589-8.026 6.988-18.85 8.613-20.8 1.025-1.23 2.29-1.132 3.412-2.275 1.473-1.499 1.915-2.725 2.6-4.712.508-1.471.678-2.35.813-3.9l.006-.068c.095-1.097.152-1.749-.006-2.857-.219-1.53-1.005-2.221-1.3-3.738-.535-2.747-.311-4.467.487-7.15.519-1.741.923-2.726 1.95-4.225.662-.965 1.423-1.23 1.95-2.275.417-.825.524-1.36.65-2.275.201-1.451-.469-2.279-.325-3.737.164-1.658.569-2.566 1.3-4.063.819-1.677 1.38-2.646 2.763-3.9 1.161-1.053 2.143-1.193 3.412-2.112 1.422-1.03 2.293-1.574 3.413-2.925 1.394-1.683 1.839-2.922 2.571-4.957l.029-.081c.661-1.839.487-3.575 1.625-4.712 1.367-1.367 2.411-1.426 4.062-2.113 1.057-.439 1.781-.388 2.763-.975 1.95-1.166 1.594-3.349 3.412-4.712Z" />
                 </g>
             </svg>
+            <input id="inputField" type="text" placeholder="Enter a word...">
+            <div class="text-settings" id="textSettings">
+                <button class="font-size">15</button>
+                <button class="bold">B</button>
+                <button class="italic">I</button>
+                <button class="underline">A</button>
+                <button class="letter-spacing"><span>T</span><span class="arrows">↔</span></button>
+                <button class="tilt-left">↺</button>
+                <button class="tilt-right">↻</button>
+            </div>
+
+
         </div>
-    </div>
 
-    <div class="colors">
-        <div class="circle" id="color-one"></div>
-        <div class="circle" id="color-two"></div>
-        <div class="circle" id="color-three"></div>
-        <div class="circle" id="color-four"></div>
-        <div class="circle" id="color-five"></div>
-        <div class="circle" id="color-six"></div>
-    </div>
+        <div class="colors">
+            <div class="circle" id="color-six"></div>
+            <div class="circle" id="color-one"></div>
+            <div class="circle" id="color-two"></div>
+            <div class="circle" id="color-three"></div>
+            <div class="circle" id="color-four"></div>
+            <div class="circle" id="color-five"></div>
+            <div class="circle" id="color-seven"></div>
+            <label class="circle wheel">
+                <input type="color" id="colorPicker" value="#ff0000">
+            </label>
+        </div>
 
-    <button class="hide-btn">Hide</button>
-    <button class="download-btn">Download</button>
+
+        <button class="hide-btn">Hide</button>
+        <button class="undo-btn">Undo</button>
+        <button class="download-btn">Download</button>
     </div>
+    <dialog id="downloadDialog">
+        <p>Download as</p>
+        <button data-format="svg">SVG</button>
+        <button data-format="png">PNG</button>
+        <button data-format="jpg">JPG</button>
+        <button data-format="cancel">Cancel</button>
+        <p><small>Hidden words are exported as their first letter only.</small></p>
+    </dialog>
+    <script src="global.js"></script>
 </body>
 
 </html>
