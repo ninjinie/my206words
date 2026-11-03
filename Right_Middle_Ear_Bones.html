@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Right Hand</title>
+    <title>Right Middle Ear Bones</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap">
 </head>
 
 <body>
@@ -13,8 +14,8 @@
 
         <div class="page-header">
             <a href="index.html">Back</a>
-            <p>Right Hand</p>
-            <small>26/206</small>
+            <p>Right Middle Ear Bones</p>
+            <small id="count"></small>
         </div>
 
         <div class="stage">
@@ -29,19 +30,47 @@
                         d="M509.213 519.873c7.172 4.5 27.581-18.703 24.047-25.875-4.781-9.703-17.864-24.315-27.422-41.063-4.615-8.086-8.759-12.085-11.109-21.093-6.75-25.875-9.108-42.237-14.063-69.469-2.871-15.785-3.318-24.859-6.89-40.5-3.124-13.679-5.305-21.27-9.703-34.594-9.587-29.043-35.258-66.806-29.953-74.25 8.718-12.234 19.082-20.577 28.546-35.719 8.645-13.829 9.256-23.963 18.282-37.547 9.707-14.609 18.125-20.516 29.953-33.468 8.176-8.954 13.647-13.213 21.094-22.782 8.083-10.387 11.504-17.039 18.14-28.406 5.847-10.015 10.198-15.222 14.063-26.156 3.456-9.779 6.118-25.662 3.797-26.016-6.469-.984-9.772-.13-16.032 0-18.621.387-28.909 3.564-47.531 3.938-18.41.37-28.722-.987-47.109-1.969-23.361-1.248-36.376-3.63-59.766-4.078-19.772-.38-31.029-1.532-50.625 1.125-12.284 1.665-19.826 1.266-31.078 6.469-10.259 4.743-17.578 13.64-20.953 16.875s6.097 9.009 9.281 15.187c2.613 5.07 4.172 7.925 5.906 13.36 1.988 6.228 2.136 9.985 3.094 16.453.511 3.45.556 5.418 1.125 8.86.956 5.782 2.245 8.873 3.375 14.624 1.382 7.035 2.411 10.983 2.813 18.141.23 4.112.194 6.432 0 10.547-.274 5.797-.752 9.037-1.688 14.765-1.467 8.978-2.721 13.973-5.484 22.641-2.654 8.323-4.703 12.897-8.211 20.727l-.227.507c-3.614 8.069-6.436 12.215-10.125 20.25-2.422 5.276-3.426 8.392-5.906 13.641-3.779 7.997-8.578 15.75-10.688 19.969-2.109 4.218 4.61 14.292 10.688 21.375 5.1 5.943 9.604 7.562 15.891 12.234 13.534 10.058 22.541 13.773 35.578 24.469 6.195 5.082 9.835 7.806 15.328 13.64 8.669 9.208 11.605 15.97 18.703 26.438 12.271 18.097 20.018 27.842 29.812 47.39 6.284 12.54 7.888 20.454 14.063 33.047 7.527 15.352 11.68 24.186 21.797 37.969 11.126 15.158 19.465 22.013 33.047 35.016 7.751 7.421 12.521 11.125 20.39 18.422 6.21 5.758 8.578 10.406 15.75 14.906Z" />
                 </g>
             </svg>
+            <input id="inputField" type="text" placeholder="Enter a word...">
+            <div class="text-settings" id="textSettings">
+                <button class="font-size">15</button>
+                <button class="bold">B</button>
+                <button class="italic">I</button>
+                <button class="underline">A</button>
+                <button class="letter-spacing"><span>T</span><span class="arrows">↔</span></button>
+                <button class="tilt-left">↺</button>
+                <button class="tilt-right">↻</button>
+            </div>
+
+
         </div>
+
         <div class="colors">
+            <div class="circle" id="color-six"></div>
             <div class="circle" id="color-one"></div>
             <div class="circle" id="color-two"></div>
             <div class="circle" id="color-three"></div>
             <div class="circle" id="color-four"></div>
             <div class="circle" id="color-five"></div>
-            <div class="circle" id="color-six"></div>
+            <div class="circle" id="color-seven"></div>
+            <label class="circle wheel">
+                <input type="color" id="colorPicker" value="#ff0000">
+            </label>
         </div>
 
+
         <button class="hide-btn">Hide</button>
+        <button class="undo-btn">Undo</button>
         <button class="download-btn">Download</button>
     </div>
+    <dialog id="downloadDialog">
+        <p>Download as</p>
+        <button data-format="svg">SVG</button>
+        <button data-format="png">PNG</button>
+        <button data-format="jpg">JPG</button>
+        <button data-format="cancel">Cancel</button>
+        <p><small>Hidden words are exported as their first letter only.</small></p>
+    </dialog>
+    <script src="global.js"></script>
 </body>
 
 </html>
