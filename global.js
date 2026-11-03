@@ -445,6 +445,79 @@ dialog.addEventListener('click', (event) => {
     if (format === 'jpg') downloadImage('image/jpeg', 'jpg');
 });
 
+// ---------- drag a word, staying inside its bone ----------
+const DRAG_THRESHOLD = 3;        // pixels the pointer must move before it counts as a drag
+let drag = null;                 // the drag in progress, if any
+let suppressClick = false;       // stops the click that ends a drag from opening the input
+
+function svgPoint(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function moveWord(label, x, y) {
+    label.setAttribute('x', x);
+    label.setAttribute('y', y);
+    label.dataset.cx = x;
+    label.dataset.cy = y;
+    applyRotation(label);        // rotation pivots around the new centre
+}
+
+svg.addEventListener('pointerdown', (event) => {
+    if (color || hiding) return;                       // dragging only in writing mode
+    const label = event.target.closest('text');
+    if (!label || !label.textContent) return;
+    drag = {
+        label,
+        bone: document.getElementById(label.dataset.bone),
+        id: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false
+    };
+    label.setPointerCapture(event.pointerId);
+});
+
+svg.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+
+    if (!drag.moved) {
+        const dist = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+        if (dist < DRAG_THRESHOLD) return;             // still just a click
+        drag.moved = true;
+        closeInput(true);                              // close the input first...
+        rememberLabel(drag.label.dataset.bone);        // ...then save the state for Undo
+    }
+
+    const p = svgPoint(event);
+    const cx = parseFloat(drag.label.dataset.cx);
+    const cy = parseFloat(drag.label.dataset.cy);
+    const inside = (x, y) => drag.bone.isPointInFill(new DOMPoint(x, y));
+
+    if (inside(p.x, p.y)) moveWord(drag.label, p.x, p.y);      // pointer is on the bone: follow it
+    else if (inside(p.x, cy)) moveWord(drag.label, p.x, cy);   // otherwise slide along one axis
+    else if (inside(cx, p.y)) moveWord(drag.label, cx, p.y);
+    // else: stay where it is, the word can't leave the bone
+});
+
+function endDrag(event) {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (drag.moved) {
+        suppressClick = true;
+        setTimeout(() => { suppressClick = false; }, 0);
+    }
+    drag = null;
+}
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+
+// capture phase: runs before the stage's normal click handler
+stage.addEventListener('click', (event) => {
+    if (suppressClick) {
+        suppressClick = false;
+        event.stopImmediatePropagation();
+    }
+}, true);
+
 // ---------- one click handler for the stage ----------
 stage.addEventListener('click', (event) => {
     if (event.target.closest('#textSettings') || event.target === input) return;

@@ -404,3 +404,9 @@ a {
 .undo-btn { left: 56px; background-color: #C6DBEF; }
 .undo-btn:hover { background-color: #92afca; }
 .undo-btn:active { transform: scale(0.98); }
+
+
+.bone-word {
+    cursor: grab;
+    touch-action: none;
+}
