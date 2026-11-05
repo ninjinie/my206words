@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Right Hand</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap">
 </head>
 
 <body>
@@ -14,7 +15,7 @@
         <div class="page-header">
             <a href="index.html">Back</a>
             <p>Right Hand</p>
-            <small>26/206</small>
+            <small id="count"></small>
         </div>
 
         <div class="stage">
@@ -64,19 +65,47 @@
                     </g>
                 </g>
             </svg>
+            <input id="inputField" type="text" placeholder="Enter a word...">
+            <div class="text-settings" id="textSettings">
+                <button class="font-size">15</button>
+                <button class="bold">B</button>
+                <button class="italic">I</button>
+                <button class="underline">A</button>
+                <button class="letter-spacing"><span>T</span><span class="arrows">↔</span></button>
+                <button class="tilt-left">↺</button>
+                <button class="tilt-right">↻</button>
+            </div>
+
+
         </div>
+
         <div class="colors">
+            <div class="circle" id="color-six"></div>
             <div class="circle" id="color-one"></div>
             <div class="circle" id="color-two"></div>
             <div class="circle" id="color-three"></div>
             <div class="circle" id="color-four"></div>
             <div class="circle" id="color-five"></div>
-            <div class="circle" id="color-six"></div>
+            <div class="circle" id="color-seven"></div>
+            <label class="circle wheel">
+                <input type="color" id="colorPicker" value="#ff0000">
+            </label>
         </div>
 
+
         <button class="hide-btn">Hide</button>
+        <button class="undo-btn">Undo</button>
         <button class="download-btn">Download</button>
     </div>
+    <dialog id="downloadDialog">
+        <p>Download as</p>
+        <button data-format="svg">SVG</button>
+        <button data-format="png">PNG</button>
+        <button data-format="jpg">JPG</button>
+        <button data-format="cancel">Cancel</button>
+        <p><small>Hidden words are exported as their first letter only.</small></p>
+    </dialog>
+    <script src="global.js"></script>
 </body>
 
 </html>
