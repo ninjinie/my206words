@@ -8,7 +8,9 @@ const undoBtn = document.querySelector('.undo-btn');
 const downloadBtn = document.querySelector('.download-btn');
 const backLink = document.querySelector('.page-header a');
 const dialog = document.getElementById('downloadDialog');
-const bones = svg.querySelectorAll('path');
+const NOT_BONES = '#discs, [id="costal cartilage"], [id="Teeth - Right View"], #Teeth';
+const bones = Array.from(svg.querySelectorAll('path'))
+    .filter(p => !p.closest(NOT_BONES));
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MIN_FONT = 6;              // smallest word size, so tiny bones still show their word
@@ -551,6 +553,29 @@ stage.addEventListener('click', (event) => {
     }
 }, true);
 
+// ---------- "Oops, not a bone" message ----------
+const oops = document.createElement('div');
+oops.textContent = 'Oops, not a bone';
+Object.assign(oops.style, {
+    position: 'fixed',
+    padding: '6px 12px',
+    background: '#fff',
+    border: '2px solid #000',
+    pointerEvents: 'none',
+    display: 'none',
+    zIndex: 1000
+});
+document.body.append(oops);
+let oopsTimer = null;
+
+function showOops(event) {
+    oops.style.left = (event.clientX + 12) + 'px';
+    oops.style.top = (event.clientY + 12) + 'px';
+    oops.style.display = 'block';
+    clearTimeout(oopsTimer);
+    oopsTimer = setTimeout(() => { oops.style.display = 'none'; }, 1200);
+}
+
 // ---------- one click handler for the stage ----------
 stage.addEventListener('click', (event) => {
     if (event.target.closest('#textSettings') || event.target === input) return;
@@ -568,6 +593,10 @@ stage.addEventListener('click', (event) => {
     }
     if (color) {                                           // color mode: paint or unpaint
         paintBone(bone);
+        return;
+    }
+    if (bone.closest(NOT_BONES)) {                         // teeth, discs, cartilage: no words
+        showOops(event);
         return;
     }
     if (hiding) {                                          // hide mode: hide or unhide the word
