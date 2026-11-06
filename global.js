@@ -620,3 +620,109 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     undo();
 });
+
+// ---------- saving: remember words and colors in this browser (uses shared.js) ----------
+// One store for the whole site. A bone drawn on several pages (see SHARED_BONES in shared.js)
+// has a single entry, so all those pages show the same word.
+let saveTimer = null;
+
+function saveState() {
+    const store = readStore();
+
+    svg.querySelectorAll('path[id]').forEach(path => {
+        const id = path.id;
+        const key = boneKey(CURRENT_PAGE, id);
+        const entry = {};
+
+        if (words.has(id)) {
+            const label = labels.get(id);
+            entry.word = words.get(id);
+            entry.hidden = hidden.has(id);
+            entry.style = label.getAttribute('style');   // size, bold, italic, spacing, color
+            entry.x = label.getAttribute('x');
+            entry.y = label.getAttribute('y');
+            entry.data = { ...label.dataset };           // fit size, angle, tilt, centre
+            entry.page = CURRENT_PAGE;                   // which drawing x/y belong to
+        }
+        if (path.dataset.paint) entry.paint = path.dataset.paint;
+
+        if (Object.keys(entry).length) store.bones[key] = entry;
+        else delete store.bones[key];
+    });
+
+    writeStore(store);
+}
+
+// a word written on another page: fit it to this drawing, keep its look
+function placeFromOtherPage(label, id, entry) {
+    placeWord(label, document.getElementById(id), entry.word);
+
+    const style = document.createElement('span').style;
+    style.cssText = entry.style || '';
+    const savedFit = parseFloat(entry.data && entry.data.fit);
+    const savedSize = parseFloat(style.fontSize);
+    const fitHere = parseFloat(label.dataset.fit);
+    const size = savedFit && savedSize ? fitHere * savedSize / savedFit : fitHere;
+
+    label.style.fontSize = size + 'px';
+    if (style.fontWeight) label.style.fontWeight = style.fontWeight;
+    if (style.fontStyle) label.style.fontStyle = style.fontStyle;
+    if (style.fill) label.style.fill = style.fill;
+    const spacing = parseFloat(style.letterSpacing);
+    if (spacing && savedSize) label.style.letterSpacing = (spacing * size / savedSize) + 'px';
+
+    label.dataset.tilt = (entry.data && entry.data.tilt) || 0;
+    applyRotation(label);
+}
+
+function loadState() {
+    const store = readStore();
+
+    labels.forEach((label, id) => {
+        const entry = store.bones[boneKey(CURRENT_PAGE, id)];
+        if (!entry || !entry.word) return;
+
+        words.set(id, entry.word);
+        if (entry.hidden) hidden.add(id);
+
+        if (entry.page === CURRENT_PAGE) {             // written here: restore exactly
+            if (entry.style) label.setAttribute('style', entry.style);
+            label.setAttribute('x', entry.x);
+            label.setAttribute('y', entry.y);
+            Object.assign(label.dataset, entry.data || {});
+            applyRotation(label);
+            label.textContent = shown(id);
+        } else {                                       // written on another page
+            placeFromOtherPage(label, id, entry);
+        }
+    });
+
+    svg.querySelectorAll('path[id]').forEach(path => {
+        const entry = store.bones[boneKey(CURRENT_PAGE, path.id)];
+        if (entry && entry.paint) {
+            path.style.fill = entry.paint;
+            path.dataset.paint = entry.paint;
+        }
+    });
+
+    count.textContent = words.size + '/' + bones.length;
+}
+
+// save shortly after anything on the drawing changes (typing, styling, dragging, painting, undo)
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 300);
+}
+
+if (typeof readStore === 'function') {
+    loadState();
+    new MutationObserver(scheduleSave).observe(svg, {
+        subtree: true,
+        attributes: true,
+        characterData: true,
+        childList: true
+    });
+    window.addEventListener('pagehide', saveState);   // last save when leaving the page
+} else {
+    console.warn('shared.js is missing: add <script src="shared.js"></script> before global.js');
+}
