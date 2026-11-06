@@ -136,16 +136,115 @@ function rememberLabel(id) {
 undoBtn.addEventListener('click', undo);
 
 // ---------- the word input (with the settings menu above it) ----------
-function openInput(bone) {
+// ---------- keeping the input and menu on screen and off the selected word ----------
+const EDGE = 8;                  // pixels kept free between the editor and the window edge
+const CLEARANCE = 8;             // pixels kept free around the selected word and its handle
+const MENU_GAP = 10;             // pixels between the menu and the input below it
+
+// the visible part of the window (on phones this shrinks when the keyboard is open)
+function visibleArea() {
+    const vv = window.visualViewport;
+    const left = vv ? vv.offsetLeft : 0;
+    const top = vv ? vv.offsetTop : 0;
+    const width = vv ? vv.width : document.documentElement.clientWidth;
+    const height = vv ? vv.height : window.innerHeight;
+    return { left: left + EDGE, top: top + EDGE, right: left + width - EDGE, bottom: top + height - EDGE };
+}
+
+// keeps a w x h box at (left, top) inside the visible area
+function clampToWindow(left, top, w, h) {
+    const area = visibleArea();
+    return {
+        left: Math.max(area.left, Math.min(left, area.right - w)),
+        top: Math.max(area.top, Math.min(top, area.bottom - h))
+    };
+}
+
+// moves an element to a window position (the element is positioned inside the stage)
+function putAt(el, left, top) {
+    const s = stage.getBoundingClientRect();
+    el.style.left = (left - s.left) + 'px';
+    el.style.top = (top - s.top) + 'px';
+    el.style.transform = 'none';
+}
+
+// a bone with no word yet: the input goes beside the bone, as before
+function placeInputBesideBone(bone) {
     const b = bone.getBoundingClientRect();
     const s = stage.getBoundingClientRect();
     const boneIsLeft = (b.left + b.right) / 2 < (s.left + s.right) / 2;
+    const w = input.offsetWidth, h = input.offsetHeight;
+    const spot = clampToWindow(boneIsLeft ? b.left - 10 - w : b.right + 10, b.top + b.height / 2 - h / 2, w, h);
+    putAt(input, spot.left, spot.top);
+}
 
+// on-screen box of the selected word, its dashed line and its handle (rotation included)
+function selectionBox() {
+    const rects = [styledLabel, handleLine, handle]
+        .filter(el => el.style.display !== 'none')
+        .map(el => el.getBoundingClientRect());
+    return {
+        left: Math.min(...rects.map(r => r.left)) - CLEARANCE,
+        top: Math.min(...rects.map(r => r.top)) - CLEARANCE,
+        right: Math.max(...rects.map(r => r.right)) + CLEARANCE,
+        bottom: Math.max(...rects.map(r => r.bottom)) + CLEARANCE
+    };
+}
+
+function overlaps(a, b) {
+    return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+// the menu and the input move together as one block: menu on top, input below it
+// keepIfClear: leave the block where it is unless it covers the word (used while rotating)
+function placeEditor(keepIfClear = false) {
+    if (!styledLabel || selectedBone === null) return;
+    const box = selectionBox();
+
+    if (keepIfClear) {
+        const m = settings.getBoundingClientRect(), i = input.getBoundingClientRect();
+        const now = {
+            left: Math.min(m.left, i.left), top: Math.min(m.top, i.top),
+            right: Math.max(m.right, i.right), bottom: Math.max(m.bottom, i.bottom)
+        };
+        if (!overlaps(now, box)) return;
+    }
+
+    const mw = settings.offsetWidth, mh = settings.offsetHeight;
+    const iw = input.offsetWidth, ih = input.offsetHeight;
+    const w = Math.max(mw, iw);
+    const h = mh + MENU_GAP + ih;
+    const area = visibleArea();
+    const midX = (box.left + box.right) / 2 - w / 2;
+    const midY = (box.top + box.bottom) / 2 - h / 2;
+
+    // in order of preference; "over" = how many pixels it would stick out of the window
+    const spots = [
+        { left: midX, top: box.bottom, over: box.bottom + h - area.bottom },     // below
+        { left: midX, top: box.top - h, over: area.top - (box.top - h) },        // above
+        { left: box.right, top: midY, over: box.right + w - area.right },        // right
+        { left: box.left - w, top: midY, over: area.left - (box.left - w) }      // left
+    ];
+    const best = spots.find(p => p.over <= 0)
+        || spots.reduce((a, b) => (b.over < a.over ? b : a));      // nothing fits: the side with the most room
+    const spot = clampToWindow(best.left, best.top, w, h);
+
+    putAt(settings, spot.left + (w - mw) / 2, spot.top);
+    putAt(input, spot.left + (w - iw) / 2, spot.top + mh + MENU_GAP);
+}
+
+function refreshEditor() {
+    if (selectedBone === null) return;
+    if (styledLabel) updateHandle();               // redraws the handle, then places the editor
+    else placeInputBesideBone(document.getElementById(selectedBone));
+}
+window.addEventListener('resize', refreshEditor);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', refreshEditor);   // phone keyboard
+
+function openInput(bone) {
     selectedBone = bone.id;
     input.style.display = 'block';
-    input.style.top = (b.top + b.height / 2 - s.top) + 'px';
-    input.style.left = (boneIsLeft ? b.left - s.left - 10 : b.right - s.left + 10) + 'px';
-    input.style.transform = boneIsLeft ? 'translate(-100%, -50%)' : 'translate(0, -50%)';
+    placeInputBesideBone(bone);            // a written word moves it again in openSettings
     input.value = words.get(bone.id) || '';
     input.focus();
     input.select();                        // so typing replaces the old word right away
@@ -299,13 +398,8 @@ settings.append(colorRow);
 
 function openSettings(label) {
     styledLabel = label;
-    const i = input.getBoundingClientRect();
-    const s = stage.getBoundingClientRect();
     settings.style.display = 'flex';
-    settings.style.left = (i.left + i.width / 2 - s.left) + 'px';   // centred above the input
-    settings.style.top = (i.top - s.top - 10) + 'px';
-    settings.style.transform = 'translate(-50%, -100%)';
-    updateHandle();
+    updateHandle();                        // draws the handle and places the menu + input off the word
 }
 
 function closeSettings() {
@@ -353,6 +447,7 @@ colorBtn.title = 'Word color';
 colorBtn.addEventListener('click', () => {
     colorRow.hidden = !colorRow.hidden;
     colorBtn.classList.toggle('active', !colorRow.hidden);
+    placeEditor();                         // the menu got taller or shorter
 });
 
 WORD_COLORS.forEach(value => {
@@ -430,6 +525,8 @@ function updateHandle() {
 
     handle.style.display = '';
     handleLine.style.display = '';
+
+    placeEditor(rotating !== null);        // while rotating, only move the editor if it would cover the word
 }
 
 handle.addEventListener('pointerdown', (event) => {
@@ -454,6 +551,7 @@ handle.addEventListener('pointermove', (event) => {
 function endRotate(event) {
     if (!rotating || event.pointerId !== rotating.id) return;
     rotating = null;
+    placeEditor();                                         // settle the editor in its best spot after rotating
     suppressClick = true;                                  // the click after rotating must not close the menu
     setTimeout(() => { suppressClick = false; }, 0);
 }
