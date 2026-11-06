@@ -32,9 +32,7 @@
                     thus would need different kind of design for the text input field.</li>
             </ul>
 
-            <form class="contact-form" name="contact" method="POST" data-netlify="true"
-                  enctype="multipart/form-data">
-                <input type="hidden" name="form-name" value="contact">
+            <form class="contact-form" name="contact" method="POST" action="https://formspree.io/f/xoeebgqn">
 
                 <label>
                     First name: <span class="optional">(optional)</span>
@@ -60,11 +58,6 @@
                     Feedback:
                     <textarea name="message" rows="6" required
                               placeholder="Type what you were trying to do and what happened"></textarea>
-                </label>
-
-                <label>
-                    Attachment: <span class="optional">(optional, e.g. a screenshot)</span>
-                    <input type="file" name="attachment" accept="image/*,.pdf">
                 </label>
 
                 <button type="submit">Send</button>

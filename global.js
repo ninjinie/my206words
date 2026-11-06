@@ -571,22 +571,6 @@ dialog.addEventListener('click', (event) => {
     exportSvg(poster, format, fileName());
 });
 
-downloadBtn.addEventListener('click', () => {
-    setColor(null);
-    setHiding(false);
-    dialog.showModal();
-});
-
-dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) { dialog.close(); return; }     // click on the dark backdrop
-    const format = event.target.dataset.format;
-    if (!format) return;
-    dialog.close();
-    if (format === 'svg') exportSvg(buildExportSvg(null, 1), 'svg', fileName());
-    if (format === 'png') exportSvg(buildExportSvg(PAPER, IMAGE_SCALE), 'png', fileName());
-    if (format === 'jpg') exportSvg(buildExportSvg(PAPER, IMAGE_SCALE), 'jpg', fileName());
-});
-
 // Copy of the SVG with everything an exported file needs written into it.
 // The labels already show only the first letter of hidden words, so the full word never reaches the file.
 function buildExportSvg(background, scale) {
@@ -652,22 +636,6 @@ function downloadImage(mimeType, extension) {
     };
     img.src = url;
 }
-
-downloadBtn.addEventListener('click', () => {
-    setColor(null);
-    setHiding(false);
-    dialog.showModal();
-});
-
-dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) { dialog.close(); return; }     // click on the dark backdrop
-    const format = event.target.dataset.format;
-    if (!format) return;
-    dialog.close();
-    if (format === 'svg') downloadSvg();
-    if (format === 'png') downloadImage('image/png', 'png');
-    if (format === 'jpg') downloadImage('image/jpeg', 'jpg');
-});
 
 // ---------- drag a word, staying inside its bone ----------
 const DRAG_THRESHOLD = 3;        // pixels the pointer must move before it counts as a drag

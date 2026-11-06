@@ -535,17 +535,3 @@ function makePoster(art, title, background, scale) {
         }
     });
 })();
-
-// Line the info button up just to the right of Undo
-function placeInfoBtn() {
-    if (!anchor) return;
-    const style = getComputedStyle(anchor);
-    if (style.position !== 'absolute' && style.position !== 'fixed') return; // normal flow: nothing to do
-
-    btn.style.position = style.position;
-    btn.style.top = (anchor.offsetTop + (anchor.offsetHeight - btn.offsetHeight) / 2) + 'px';
-    btn.style.left = (anchor.offsetLeft + anchor.offsetWidth + 8) + 'px';
-}
-
-placeInfoBtn();
-window.addEventListener('resize', placeInfoBtn);
