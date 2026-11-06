@@ -557,9 +557,22 @@
             <div class="circle" id="color-six"></div>
         </div>
 
-        <button class="hide-btn">Hide</button>
-        <button class="download-btn">Download</button>
+        <div class="index-controls">
+            <button class="mode-btn">Present</button>
+            <button class="words-btn" hidden>Hide words</button>
+            <button class="outline-btn" hidden>Hide outlines</button>
+            <button class="download-btn">Download</button>
+        </div>
     </div>
+    <dialog id="downloadDialog">
+        <p>Download as</p>
+        <button data-format="svg">SVG</button>
+        <button data-format="png">PNG</button>
+        <button data-format="jpg">JPG</button>
+        <button data-format="cancel">Cancel</button>
+    </dialog>
+    <footer class="site-footer">I am made up of 206 words</footer>
+    <script src="shared.js"></script>
     <script src="index.js"></script>
 </body>
 

@@ -18,6 +18,7 @@ const PAPER = '#EFE4CB';         // background color of PNG/JPG downloads
 const IMAGE_SCALE = 4;           // PNG/JPG are drawn 4x bigger than the SVG so they stay sharp
 const SIDE_PADDING = 80;         // extra space on EACH side of a downloaded image, in SVG units
 const MAX_UNDO = 100;            // how many steps Undo remembers
+const WORD_COLORS = ['#000000', '#FC6161', '#FFE08D', '#8DE28D', '#61AEFC', '#9F61FC', '#FFFFFF'];
 const words = new Map();         // bone id -> full word
 const labels = new Map();        // bone id -> text element
 const hidden = new Set();        // bone ids whose word is hidden (only the first letter shows)
@@ -123,6 +124,7 @@ function restoreLabel(id, snap) {
     Object.assign(l.dataset, snap.data);
 
     count.textContent = words.size + '/' + bones.length;
+    if (l === styledLabel) updateHandle();
 }
 
 // call this right BEFORE changing a word, so Undo can put it back
@@ -277,11 +279,23 @@ function placeWord(label, bone, word) {
 }
 
 function applyRotation(label) {
-    const total = parseFloat(label.dataset.angle) + parseFloat(label.dataset.tilt || 0);
+    const total = parseFloat(label.dataset.angle || 0) + parseFloat(label.dataset.tilt || 0);
     label.setAttribute('transform', `rotate(${total} ${label.dataset.cx} ${label.dataset.cy})`);
+    if (label === styledLabel) updateHandle();
 }
 
 // ---------- the text settings menu ----------
+
+// extra rows, built here so no page's HTML has to change
+const colorRow = document.createElement('div');
+colorRow.className = 'settings-row';
+colorRow.hidden = true;
+
+const moveRow = document.createElement('div');
+moveRow.className = 'settings-row';
+
+settings.append(colorRow, moveRow);
+
 function openSettings(label) {
     styledLabel = label;
     const i = input.getBoundingClientRect();
@@ -290,11 +304,15 @@ function openSettings(label) {
     settings.style.left = (i.left + i.width / 2 - s.left) + 'px';   // centred above the input
     settings.style.top = (i.top - s.top - 10) + 'px';
     settings.style.transform = 'translate(-50%, -100%)';
+    updateHandle();
 }
 
 function closeSettings() {
     settings.style.display = 'none';
     styledLabel = null;
+    colorRow.hidden = true;
+    colorBtn.classList.remove('active');
+    updateHandle();
 }
 
 // pressing a settings button must not steal focus from the input
@@ -310,12 +328,28 @@ function tilt(degrees) {
     applyRotation(styledLabel);
 }
 
+// move the word a small step, but never out of its bone
+function nudge(dx, dy) {
+    const label = styledLabel;
+    const bone = document.getElementById(label.dataset.bone);
+    const step = (parseFloat(label.style.fontSize) || MIN_FONT) * 0.4;
+    const x = parseFloat(label.dataset.cx) + dx * step;
+    const y = parseFloat(label.dataset.cy) + dy * step;
+    if (bone.isPointInFill(new DOMPoint(x, y))) moveWord(label, x, y);
+}
+
 // wires one settings button: remember the word for Undo, then run the change
-function onSettings(selector, action) {
-    settings.querySelector(selector).addEventListener('click', () => {
+function onSettingsButton(button, action) {
+    button.addEventListener('click', () => {
+        if (!styledLabel) return;
         rememberLabel(styledLabel.dataset.bone);
         action();
+        updateHandle();
     });
+}
+
+function onSettings(selector, action) {
+    onSettingsButton(settings.querySelector(selector), action);
 }
 
 onSettings('.font-size', () => {
@@ -326,11 +360,102 @@ onSettings('.font-size', () => {
 onSettings('.letter-spacing', () => cycle('letterSpacing', ['0px', '1px', '2px', '3px']));
 onSettings('.bold', () => cycle('fontWeight', ['bold', 'normal']));
 onSettings('.italic', () => cycle('fontStyle', ['italic', 'normal']));
-onSettings('.underline', () => {
-    styledLabel.style.fill = color || '#000';              // paints the word with the selected color
-});
 onSettings('.tilt-left', () => tilt(-5));
 onSettings('.tilt-right', () => tilt(5));
+
+// "A" opens the row of word colors
+const colorBtn = settings.querySelector('.underline');
+colorBtn.title = 'Word color';
+colorBtn.addEventListener('click', () => {
+    colorRow.hidden = !colorRow.hidden;
+    colorBtn.classList.toggle('active', !colorRow.hidden);
+});
+
+WORD_COLORS.forEach(value => {
+    const swatch = document.createElement('button');
+    swatch.className = 'word-swatch';
+    swatch.style.background = value;
+    swatch.title = value;
+    colorRow.append(swatch);
+    onSettingsButton(swatch, () => { styledLabel.style.fill = value; });
+});
+
+// arrows move the word
+[['←', -1, 0, 'Move left'], ['→', 1, 0, 'Move right'],
+ ['↑', 0, -1, 'Move up'], ['↓', 0, 1, 'Move down']].forEach(([text, dx, dy, title]) => {
+    const button = document.createElement('button');
+    button.textContent = text;
+    button.title = title;
+    moveRow.append(button);
+    onSettingsButton(button, () => nudge(dx, dy));
+});
+
+// ---------- rotation handle: drag the circle to rotate the word (Shift = 15° steps) ----------
+const handleLine = make('line', { class: 'rotate-line' });
+const handle = make('circle', { class: 'rotate-handle' });
+handle.style.display = 'none';
+handleLine.style.display = 'none';
+svg.append(handleLine, handle);
+let rotating = null;
+
+function updateHandle() {
+    const label = styledLabel;
+    if (!label || !label.textContent) {
+        handle.style.display = 'none';
+        handleLine.style.display = 'none';
+        return;
+    }
+    const box = label.getBBox();                           // size before rotation
+    const cx = parseFloat(label.dataset.cx);
+    const cy = parseFloat(label.dataset.cy);
+    const total = parseFloat(label.dataset.angle || 0) + parseFloat(label.dataset.tilt || 0);
+    const rad = total * Math.PI / 180;
+    const unit = 1 / svg.getScreenCTM().a;                 // one screen pixel in SVG units
+    const start = box.width / 2;
+    const end = start + 16 * unit;
+
+    handleLine.setAttribute('x1', cx + Math.cos(rad) * start);
+    handleLine.setAttribute('y1', cy + Math.sin(rad) * start);
+    handleLine.setAttribute('x2', cx + Math.cos(rad) * end);
+    handleLine.setAttribute('y2', cy + Math.sin(rad) * end);
+    handleLine.setAttribute('stroke-width', unit);
+
+    handle.setAttribute('cx', cx + Math.cos(rad) * end);
+    handle.setAttribute('cy', cy + Math.sin(rad) * end);
+    handle.setAttribute('r', 5 * unit);
+    handle.setAttribute('stroke-width', unit);
+
+    handle.style.display = '';
+    handleLine.style.display = '';
+}
+
+handle.addEventListener('pointerdown', (event) => {
+    if (!styledLabel) return;
+    event.preventDefault();                                // keeps the input focused, so the menu stays open
+    event.stopPropagation();                               // not a word drag
+    rememberLabel(styledLabel.dataset.bone);
+    rotating = { label: styledLabel, id: event.pointerId };
+    handle.setPointerCapture(event.pointerId);
+});
+
+handle.addEventListener('pointermove', (event) => {
+    if (!rotating || event.pointerId !== rotating.id) return;
+    const label = rotating.label;
+    const p = svgPoint(event);
+    let deg = Math.atan2(p.y - parseFloat(label.dataset.cy), p.x - parseFloat(label.dataset.cx)) * 180 / Math.PI;
+    if (event.shiftKey) deg = Math.round(deg / 15) * 15;
+    label.dataset.tilt = deg - parseFloat(label.dataset.angle || 0);
+    applyRotation(label);
+});
+
+function endRotate(event) {
+    if (!rotating || event.pointerId !== rotating.id) return;
+    rotating = null;
+    suppressClick = true;                                  // the click after rotating must not close the menu
+    setTimeout(() => { suppressClick = false; }, 0);
+}
+handle.addEventListener('pointerup', endRotate);
+handle.addEventListener('pointercancel', endRotate);
 
 // ---------- colors ----------
 function setColor(value, circle) {
@@ -396,6 +521,7 @@ function toggleHidden(id) {
 hideBtn.addEventListener('click', () => setHiding(!hiding));
 
 // ---------- download ----------
+// ---------- download ----------
 function fileName() {
     return document.querySelector('.page-header p').textContent.trim().toLowerCase().replace(/\s+/g, '-');
 }
@@ -406,6 +532,61 @@ function buildExportSvg(background, scale) {
     const clone = svg.cloneNode(true);
     const vb = svg.viewBox.baseVal;
     const font = getComputedStyle(svg.querySelector('.bone-word')).fontFamily;
+
+    clone.querySelectorAll('.rotate-handle, .rotate-line').forEach(el => el.remove());   // editing tools stay out
+
+    // widen the canvas sideways; the height stays exactly as it was
+    const x = vb.x - SIDE_PADDING;
+    const w = vb.width + 2 * SIDE_PADDING;
+    clone.setAttribute('viewBox', `${x} ${vb.y} ${w} ${vb.height}`);
+
+    clone.querySelectorAll('text').forEach(t => {
+        if (!t.textContent) {
+            t.remove();                                    // empty labels stay out of the file
+            return;
+        }
+        t.setAttribute('font-family', font);               // the page's CSS isn't inside the file
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'middle');
+        t.setAttribute('fill', '#000');                    // an inline color from the menu still wins
+        t.setAttribute('stroke', 'none');
+    });
+
+    clone.removeAttribute('class');
+    clone.setAttribute('width', w * scale);
+    clone.setAttribute('height', vb.height * scale);
+
+    if (background) {
+        const rect = make('rect', { x, y: vb.y, width: w, height: vb.height, fill: background });
+        clone.insertBefore(rect, clone.firstChild);
+    }
+    return clone;
+}
+
+downloadBtn.addEventListener('click', () => {
+    setColor(null);
+    setHiding(false);
+    dialog.showModal();
+});
+
+dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) { dialog.close(); return; }     // click on the dark backdrop
+    const format = event.target.dataset.format;
+    if (!format) return;
+    dialog.close();
+    if (format === 'svg') exportSvg(buildExportSvg(null, 1), 'svg', fileName());
+    if (format === 'png') exportSvg(buildExportSvg(PAPER, IMAGE_SCALE), 'png', fileName());
+    if (format === 'jpg') exportSvg(buildExportSvg(PAPER, IMAGE_SCALE), 'jpg', fileName());
+});
+
+// Copy of the SVG with everything an exported file needs written into it.
+// The labels already show only the first letter of hidden words, so the full word never reaches the file.
+function buildExportSvg(background, scale) {
+    const clone = svg.cloneNode(true);
+    const vb = svg.viewBox.baseVal;
+    const font = getComputedStyle(svg.querySelector('.bone-word')).fontFamily;
+
+    clone.querySelectorAll('.rotate-handle, .rotate-line').forEach(el => el.remove());   // editing tools stay out
 
     // widen the canvas sideways; the height stays exactly as it was
     const x = vb.x - SIDE_PADDING;
@@ -579,6 +760,7 @@ function showOops(event) {
 // ---------- one click handler for the stage ----------
 stage.addEventListener('click', (event) => {
     if (event.target.closest('#textSettings') || event.target === input) return;
+    if (event.target === handle) return;                   // the rotation handle is not empty space
 
     const label = event.target.closest('text');
     const bone = label
@@ -636,6 +818,10 @@ function saveState() {
 
         if (words.has(id)) {
             const label = labels.get(id);
+            const box = path.getBBox();
+            const cx = parseFloat(label.dataset.cx);
+            const cy = parseFloat(label.dataset.cy);
+
             entry.word = words.get(id);
             entry.hidden = hidden.has(id);
             entry.style = label.getAttribute('style');   // size, bold, italic, spacing, color
@@ -643,6 +829,13 @@ function saveState() {
             entry.y = label.getAttribute('y');
             entry.data = { ...label.dataset };           // fit size, angle, tilt, centre
             entry.page = CURRENT_PAGE;                   // which drawing x/y belong to
+            // where the word sits inside the bone (0..1) and how big the bone is,
+            // so other drawings of this bone (and the index) can copy it exactly
+            entry.box = { w: box.width, h: box.height };
+            entry.rel = {
+                u: box.width ? (cx - box.x) / box.width : 0.5,
+                v: box.height ? (cy - box.y) / box.height : 0.5
+            };
         }
         if (path.dataset.paint) entry.paint = path.dataset.paint;
 
@@ -653,24 +846,40 @@ function saveState() {
     writeStore(store);
 }
 
-// a word written on another page: fit it to this drawing, keep its look
+// a word written on another page: copy it onto this drawing, same spot, size scaled to the bone
 function placeFromOtherPage(label, id, entry) {
-    placeWord(label, document.getElementById(id), entry.word);
+    const bone = document.getElementById(id);
+    placeWord(label, bone, entry.word);                   // gives a safe fallback position and the fit size
 
-    const style = document.createElement('span').style;
-    style.cssText = entry.style || '';
+    const style = parseStyle(entry.style);
+    if (style.fontWeight) label.style.fontWeight = style.fontWeight;
+    if (style.fontStyle) label.style.fontStyle = style.fontStyle;
+    if (style.fill) label.style.fill = style.fill;
+
+    const mapped = mapWord(entry, bone.getBBox());
+    if (mapped) {
+        label.style.fontSize = mapped.size + 'px';
+        if (mapped.spacing) label.style.letterSpacing = mapped.spacing + 'px';
+        label.dataset.angle = mapped.angle;               // same rotation as where it was written
+        label.dataset.tilt = 0;
+        if (bone.isPointInFill(new DOMPoint(mapped.x, mapped.y))) {
+            label.setAttribute('x', mapped.x);
+            label.setAttribute('y', mapped.y);
+            label.dataset.cx = mapped.x;
+            label.dataset.cy = mapped.y;
+        }
+        applyRotation(label);
+        return;
+    }
+
+    // older saves without position info: keep the size relative to the fitted size
     const savedFit = parseFloat(entry.data && entry.data.fit);
     const savedSize = parseFloat(style.fontSize);
     const fitHere = parseFloat(label.dataset.fit);
     const size = savedFit && savedSize ? fitHere * savedSize / savedFit : fitHere;
-
     label.style.fontSize = size + 'px';
-    if (style.fontWeight) label.style.fontWeight = style.fontWeight;
-    if (style.fontStyle) label.style.fontStyle = style.fontStyle;
-    if (style.fill) label.style.fill = style.fill;
     const spacing = parseFloat(style.letterSpacing);
     if (spacing && savedSize) label.style.letterSpacing = (spacing * size / savedSize) + 'px';
-
     label.dataset.tilt = (entry.data && entry.data.tilt) || 0;
     applyRotation(label);
 }
@@ -715,14 +924,19 @@ function scheduleSave() {
 }
 
 if (typeof readStore === 'function') {
-    loadState();
-    new MutationObserver(scheduleSave).observe(svg, {
-        subtree: true,
-        attributes: true,
-        characterData: true,
-        childList: true
-    });
-    window.addEventListener('pagehide', saveState);   // last save when leaving the page
+    const start = () => {
+        loadState();
+        saveState();                                   // updates older saves with the exact position info
+        new MutationObserver(scheduleSave).observe(svg, {
+            subtree: true,
+            attributes: true,
+            characterData: true,
+            childList: true
+        });
+        window.addEventListener('pagehide', saveState);   // last save when leaving the page
+    };
+    // wait for fonts (Dashtseden) so word widths are measured correctly
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
 } else {
     console.warn('shared.js is missing: add <script src="shared.js"></script> before global.js');
 }

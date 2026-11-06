@@ -1,11 +1,11 @@
 // =====================================================================
-// 1. CLICK A REGION -> OPEN ITS PAGE
+// 1. MODES: working (click regions) / presenting (toggles, no clicks)
 // =====================================================================
 const REGION_PAGES = {
     Skull: 'Skull.html',
     shoulder: 'Shoulder.html',
     Rib: 'rib.html',
-    Spine: 'Spine_Hyoid.html',
+    Spine: 'Spine.html',
     Pelvis: 'Pelvis.html',
     Right_Arm: 'Right_Arm.html',
     Left_Arm: 'Left_Arm.html',
@@ -18,6 +18,40 @@ const REGION_PAGES = {
 };
 
 const skeleton = document.querySelector('.stage svg');
+const modeBtn = document.querySelector('.mode-btn');
+const wordsBtn = document.querySelector('.words-btn');
+const outlineBtn = document.querySelector('.outline-btn');
+let presenting = false;
+
+function setPresenting(on) {
+    presenting = on;
+    if (modeBtn) {
+        modeBtn.textContent = on ? 'Work' : 'Present';
+        modeBtn.classList.toggle('active', on);
+    }
+    if (wordsBtn) wordsBtn.hidden = !on;
+    if (outlineBtn) outlineBtn.hidden = !on;
+    skeleton.style.cursor = 'default';
+    if (!on) {                                   // back to working: show everything again
+        skeleton.classList.remove('no-words', 'no-outline');
+        if (wordsBtn) { wordsBtn.textContent = 'Hide words'; wordsBtn.classList.remove('active'); }
+        if (outlineBtn) { outlineBtn.textContent = 'Hide outlines'; outlineBtn.classList.remove('active'); }
+    }
+}
+
+if (modeBtn) modeBtn.addEventListener('click', () => setPresenting(!presenting));
+
+if (wordsBtn) wordsBtn.addEventListener('click', () => {
+    const off = skeleton.classList.toggle('no-words');
+    wordsBtn.textContent = off ? 'Show words' : 'Hide words';
+    wordsBtn.classList.toggle('active', off);
+});
+
+if (outlineBtn) outlineBtn.addEventListener('click', () => {
+    const off = skeleton.classList.toggle('no-outline');      // also hides the paint
+    outlineBtn.textContent = off ? 'Show outlines' : 'Hide outlines';
+    outlineBtn.classList.toggle('active', off);
+});
 
 // bones are drawn on top of the masks, so look under the pointer for the first region mask
 function regionAt(event) {
@@ -26,11 +60,13 @@ function regionAt(event) {
 }
 
 skeleton.addEventListener('click', (event) => {
+    if (presenting) return;
     const region = regionAt(event);
     if (region) window.location.href = REGION_PAGES[region.id];
 });
 
 skeleton.addEventListener('mousemove', (event) => {
+    if (presenting) return;
     skeleton.style.cursor = regionAt(event) ? 'pointer' : 'default';
 });
 
@@ -40,7 +76,7 @@ skeleton.addEventListener('mousemove', (event) => {
 // =====================================================================
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const TOTAL_BONES = 206;
-const MIN_FONT = 1;    // the index is small, so words can be tiny
+const MIN_FONT = 1;    // the index is small, so fitted words can be tiny
 
 const RIGHT_HAND_IDS = [
     'distal_phalanges_1', 'middle_phalanges_1', 'proximal_phalanges_1', 'metacarpal_bones_1',
@@ -93,7 +129,7 @@ function linkSameIds(groupId, page) {
     const g = group(groupId);
     if (!g) return console.warn('Index group not found:', groupId);
     g.querySelectorAll('path').forEach(bone => {
-        const id = bone.id || bone.parentNode.id;   // frontal bone: the id sits on its wrapper group
+        const id = bone.id || bone.parentNode.id;   // frontal bone: the id may sit on its wrapper group
         links.push({ bone, page, id });
     });
 }
@@ -160,6 +196,28 @@ function firstLetter(word) {
     return Array.from(word)[0];
 }
 
+function onSide(side, x) {
+    return !side || (side === 'left' ? x < midX : x > midX);
+}
+
+function insideBone(link, x, y) {
+    return onSide(link.side, x) && link.bone.isPointInFill(new DOMPoint(x, y));
+}
+
+// bounding box of the index shape (only one half for a split rib)
+function boneBox(link) {
+    if (!link.side) return link.bone.getBBox();
+    const total = link.bone.getTotalLength();
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < 300; i++) {
+        const p = link.bone.getPointAtLength(total * i / 300);
+        if (!onSide(link.side, p.x)) continue;
+        x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y);
+        x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
+    }
+    return x0 === Infinity ? null : { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
+
 // clip shapes so half of a rib can be painted
 function sideClip(side) {
     const id = 'index-clip-' + side;
@@ -191,10 +249,8 @@ function paintBone(link, color) {
     link.bone.parentNode.insertBefore(half, link.bone);   // under the outline
 }
 
-// same idea as placeWord in global.js: put the word along the longest line of the bone
+// fallback placement (same idea as placeWord in global.js), used when a save has no position info
 function fit(label, bone, word, side) {
-    const onSide = p => !side || (side === 'left' ? p.x < midX : p.x > midX);
-
     const total = bone.getTotalLength();
     if (!total) return null;
     const N = 400;
@@ -207,13 +263,13 @@ function fit(label, bone, word, side) {
         if (Math.hypot(all[i].x - all[i - 1].x, all[i].y - all[i - 1].y) > step * 1.5) pieces.push([]);
         pieces[pieces.length - 1].push(all[i]);
     }
-    pieces = pieces.map(p => p.filter(onSide)).filter(p => p.length);
+    pieces = pieces.map(p => p.filter(q => onSide(side, q.x))).filter(p => p.length);
     if (!pieces.length) return null;
 
     const main = pieces.reduce((best, p) => (p.length > best.length ? p : best));
     const stride = Math.max(1, Math.floor(main.length / 80));
     let pts = main.filter((_, i) => i % stride === 0);
-    if (pts.length < 3) pts = all.filter(onSide).filter((_, i) => i % 7 === 0);
+    if (pts.length < 3) pts = all.filter(q => onSide(side, q.x)).filter((_, i) => i % 7 === 0);
     if (pts.length < 2) return null;
 
     let a = pts[0], b = pts[1], longest = 0;
@@ -241,7 +297,7 @@ function fit(label, bone, word, side) {
 
     let x = (a.x + b.x) / 2;
     let y = (a.y + b.y) / 2;
-    const inside = (px, py) => bone.isPointInFill(new DOMPoint(px, py)) && onSide({ x: px });
+    const inside = (px, py) => onSide(side, px) && bone.isPointInFill(new DOMPoint(px, py));
     if (!inside(x, y)) {
         const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
         const x0 = Math.min(...xs), x1 = Math.max(...xs);
@@ -268,30 +324,39 @@ function drawWord(link, saved) {
     });
     wordsLayer.append(label);
 
-    const style = document.createElement('span').style;
-    style.cssText = saved.style || '';
+    const style = parseStyle(saved.style);
     label.style.fontWeight = style.fontWeight;
     label.style.fontStyle = style.fontStyle;
     label.style.fill = style.fill || '#000';
     label.style.stroke = 'none';
 
-    const placed = fit(label, link.bone, saved.word, link.side);
-    if (!placed) { label.remove(); return; }
+    let x, y, angle, size, spacing = 0;
+    const mapped = mapWord(saved, boneBox(link));
 
-    // keep the size the person chose, relative to the bone
-    const savedFit = parseFloat(saved.data && saved.data.fit);
-    const savedSize = parseFloat(style.fontSize);
-    const ratio = savedFit && savedSize ? savedSize / savedFit : 1;
-    const size = placed.size * ratio;
+    if (mapped) {                                       // exact copy: same spot, angle and scaled size
+        ({ x, y, angle, size, spacing } = mapped);
+        if (!insideBone(link, x, y)) {                  // the two drawings differ a little: move inside
+            const placed = fit(label, link.bone, saved.word, link.side);
+            if (placed) { x = placed.x; y = placed.y; }
+        }
+    } else {                                            // older save: fit it, keep the chosen size ratio
+        const placed = fit(label, link.bone, saved.word, link.side);
+        if (!placed) { label.remove(); return; }
+        const savedFit = parseFloat(saved.data && saved.data.fit);
+        const savedSize = parseFloat(style.fontSize);
+        const ratio = savedFit && savedSize ? savedSize / savedFit : 1;
+        x = placed.x;
+        y = placed.y;
+        size = placed.size * ratio;
+        angle = placed.angle + (parseFloat(saved.data && saved.data.tilt) || 0);
+        spacing = savedSize ? (parseFloat(style.letterSpacing) || 0) * size / savedSize : 0;
+    }
+
     label.style.fontSize = size + 'px';
-
-    const spacing = parseFloat(style.letterSpacing);
-    if (spacing && savedSize) label.style.letterSpacing = (spacing * size / savedSize) + 'px';
-
-    const tilt = parseFloat(saved.data && saved.data.tilt) || 0;
-    label.setAttribute('x', placed.x);
-    label.setAttribute('y', placed.y);
-    label.setAttribute('transform', `rotate(${placed.angle + tilt} ${placed.x} ${placed.y})`);
+    if (spacing) label.style.letterSpacing = spacing + 'px';
+    label.setAttribute('x', x);
+    label.setAttribute('y', y);
+    label.setAttribute('transform', `rotate(${angle} ${x} ${y})`);
     label.textContent = saved.hidden ? firstLetter(saved.word) : saved.word;
 }
 
@@ -334,3 +399,72 @@ function render() {
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) render();
 });
+
+
+// =====================================================================
+// 4. DOWNLOAD THE FULL SKELETON, EXACTLY AS IT LOOKS NOW
+// =====================================================================
+const indexDownloadBtn = document.querySelector('.download-btn');
+const indexDialog = document.getElementById('downloadDialog');
+const INDEX_PAPER = '#EFE4CB';    // same as the page background
+const INDEX_SCALE = 6;            // the index SVG is small, so images are drawn 6x bigger to stay sharp
+const INDEX_FILE = 'i-am-made-up-of-206-words';
+
+function buildIndexSvg(background, scale) {
+    const clone = skeleton.cloneNode(true);
+    const vb = skeleton.viewBox.baseVal;
+    const wordsOff = skeleton.classList.contains('no-words');
+    const outlinesOff = skeleton.classList.contains('no-outline');
+
+    clone.removeAttribute('class');
+    clone.removeAttribute('style');
+
+    // the click regions are page-colored shapes: invisible on screen, so keep them out of the file
+    for (const id of Object.keys(REGION_PAGES)) {
+        clone.querySelectorAll(`[id="${id}"]:not(g)`).forEach(el => el.remove());
+    }
+
+    // the two toggles live in the page's CSS, which the file doesn't have: write them in
+    if (wordsOff) {
+        const layer = clone.querySelector('#index-words');
+        if (layer) layer.remove();
+    }
+    if (outlinesOff) {
+        clone.querySelectorAll('path').forEach(path => {
+            path.setAttribute('stroke', 'none');
+            path.setAttribute('fill', 'none');
+            path.style.stroke = 'none';
+            path.style.fill = 'none';
+        });
+    }
+
+    // the words' font comes from CSS too
+    const sample = skeleton.querySelector('#index-words text');
+    const font = sample ? getComputedStyle(sample).fontFamily : '';
+    clone.querySelectorAll('#index-words text').forEach(t => {
+        if (font) t.setAttribute('font-family', font);
+    });
+
+    clone.setAttribute('width', vb.width * scale);
+    clone.setAttribute('height', vb.height * scale);
+
+    if (background) {
+        const rect = make('rect', { x: vb.x, y: vb.y, width: vb.width, height: vb.height, fill: background });
+        clone.insertBefore(rect, clone.firstChild);
+    }
+    return clone;
+}
+
+if (indexDownloadBtn && indexDialog) {
+    indexDownloadBtn.addEventListener('click', () => indexDialog.showModal());
+
+    indexDialog.addEventListener('click', (event) => {
+        if (event.target === indexDialog) { indexDialog.close(); return; }   // click on the dark backdrop
+        const format = event.target.dataset.format;
+        if (!format) return;
+        indexDialog.close();
+        if (format === 'svg') exportSvg(buildIndexSvg(null, 1), 'svg', INDEX_FILE);
+        if (format === 'png') exportSvg(buildIndexSvg(INDEX_PAPER, INDEX_SCALE), 'png', INDEX_FILE);
+        if (format === 'jpg') exportSvg(buildIndexSvg(INDEX_PAPER, INDEX_SCALE), 'jpg', INDEX_FILE);
+    });
+}

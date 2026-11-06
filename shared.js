@@ -84,3 +84,112 @@ function writeStore(store) {
         console.warn('Could not save:', error);
     }
 }
+
+// read an inline style string ("font-size: 12px; font-weight: bold") into a style object
+function parseStyle(text) {
+    const style = document.createElement('span').style;
+    style.cssText = text || '';
+    return style;
+}
+
+// Copy a saved word onto another drawing of the same bone.
+// `box` = bounding box of the bone in the new drawing.
+// Same spot inside the bone, same angle, size scaled to the bone.
+function mapWord(entry, box) {
+    if (!entry || !entry.box || !entry.rel || !entry.box.w || !box || !box.width) return null;
+    const style = parseStyle(entry.style);
+    const savedSize = parseFloat(style.fontSize);
+    if (!savedSize) return null;
+
+    const scale = Math.hypot(box.width, box.height) / Math.hypot(entry.box.w, entry.box.h);
+    const data = entry.data || {};
+    return {
+        x: box.x + entry.rel.u * box.width,
+        y: box.y + entry.rel.v * box.height,
+        angle: (parseFloat(data.angle) || 0) + (parseFloat(data.tilt) || 0),
+        size: savedSize * scale,
+        spacing: (parseFloat(style.letterSpacing) || 0) * scale,
+        style
+    };
+}
+
+// =====================================================================
+// downloads: embed the Dashtseden font so images look exactly like the screen
+// =====================================================================
+const FONT_FILES = [
+    ['fonts/Dashtseden.woff2', 'woff2'],
+    ['fonts/Dashtseden.ttf', 'truetype']
+];
+let fontCssCache = null;
+
+// the font file as text that can live inside an SVG (read once, then reused)
+function embeddedFontCss() {
+    if (!fontCssCache) {
+        fontCssCache = (async () => {
+            for (const [url, format] of FONT_FILES) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) continue;
+                    const blob = await response.blob();
+                    const data = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    return `@font-face { font-family: "Dashtseden"; src: url(${data}) format("${format}"); ` +
+                           `unicode-range: U+1800-18AF, U+11660-1167F, U+202F; }`;
+                } catch (error) { }
+            }
+            console.warn('Dashtseden font file not found in /fonts: downloads will use a fallback font');
+            return '';
+        })();
+    }
+    return fontCssCache;
+}
+
+function saveFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// clone = a finished copy of the SVG (size, background, everything set)
+// format = 'svg' | 'png' | 'jpg'
+async function exportSvg(clone, format, name) {
+    const css = await embeddedFontCss();
+    if (css) {
+        const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        style.textContent = css;
+        clone.insertBefore(style, clone.firstChild);
+    }
+
+    const markup = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([markup], { type: 'image/svg+xml;charset=utf-8' });
+    if (format === 'svg') {
+        saveFile(svgBlob, name + '.svg');
+        return;
+    }
+
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.src = url;
+    try {
+        await img.decode();
+    } catch (error) {
+        await new Promise(resolve => { img.onload = resolve; });
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));   // let the embedded font finish rendering
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    canvas.toBlob(blob => saveFile(blob, name + '.' + format), mime, 0.92);
+}

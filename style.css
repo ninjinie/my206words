@@ -1,3 +1,11 @@
+@font-face {
+    font-family: "Dashtseden";
+    src: url("fonts/Dashtseden.woff2") format("woff2"),
+         url("fonts/Dashtseden.ttf") format("truetype");
+    unicode-range: U+1800-18AF, U+11660-1167F, U+202F;   /* only Mongolian characters use it */
+    font-display: swap;
+}
+
 * {
     box-sizing: border-box;
     font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text", "Times New Roman", serif;
@@ -99,7 +107,7 @@ a {
     display: none;
     width: 140px;
     font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text",
-                 "Times New Roman", "Noto Sans Mongolian", "Mongolian Baiti", serif;
+                 "Times New Roman", "Dashtseden", "Noto Sans Mongolian", "Mongolian Baiti", serif;
 }
 
 .bone-word {
@@ -110,7 +118,7 @@ a {
     stroke: none;
     cursor: pointer;
     font-family: Garamond, Baskerville, "Baskerville Old Face", "Hoefler Text",
-                 "Times New Roman", "Noto Sans Mongolian", "Mongolian Baiti", serif; 
+                 "Times New Roman", "Dashtseden", "Noto Sans Mongolian", "Mongolian Baiti", serif; 
 }
 
 .circle {
@@ -409,4 +417,137 @@ a {
 .bone-word {
     cursor: grab;
     touch-action: none;
+}
+
+/* ---------- settings menu: extra rows ---------- */
+.text-settings {
+    flex-wrap: wrap;
+    height: auto;
+    row-gap: 6px;
+    padding: 6px 0;
+}
+
+.settings-row {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.settings-row[hidden] {
+    display: none;
+}
+
+.word-swatch {
+    width: 22px !important;
+    height: 22px !important;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.underline.active {
+    outline: 2px solid #000;
+}
+
+/* ---------- rotation handle ---------- */
+.rotate-handle {
+    fill: #fff;
+    stroke: #000;
+    cursor: grab;
+    touch-action: none;
+}
+
+.rotate-line {
+    stroke: #000;
+    stroke-dasharray: 2 2;
+    pointer-events: none;
+}
+
+/* ---------- index: controls, presentation, footer ---------- */
+.index-controls {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.index-controls button {
+    font-size: medium;
+    letter-spacing: 0.7px;
+    background-color: #C6DBEF;
+}
+
+.index-controls button:hover { background-color: #92afca; }
+
+.index-controls button.active {
+    background-color: #92afca;
+    outline: 2px solid #000;
+}
+
+.stage svg.no-outline path {
+    stroke: none !important;
+    fill: none !important;
+}
+
+.stage svg.no-words #index-words {
+    display: none;
+}
+
+.site-footer {
+    flex-shrink: 0;
+    text-align: center;
+    padding-top: 12px;
+    font-size: 18px;
+    letter-spacing: 0.7px;
+}
+
+/* ---------- index: controls, presentation, footer ---------- */
+.index-controls {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.index-controls button {
+    font-size: medium;
+    letter-spacing: 0.7px;
+    background-color: #C6DBEF;
+}
+
+.index-controls button:hover { background-color: #92afca; }
+
+.index-controls button.active {
+    background-color: #92afca;
+    outline: 2px solid #000;
+}
+
+.index-controls .download-btn {
+    position: static;                 /* the region pages' download button is positioned; this one sits in the row */
+    background-color: #DCCBFF;
+}
+
+.index-controls .download-btn:hover { background-color: #ad90e7; }
+
+.stage svg.no-outline path {
+    stroke: none !important;
+    fill: none !important;
+}
+
+.stage svg.no-words #index-words {
+    display: none;
+}
+
+.site-footer {
+    flex-shrink: 0;
+    text-align: center;
+    padding-top: 12px;
+    font-size: 18px;
+    letter-spacing: 0.7px;
 }
