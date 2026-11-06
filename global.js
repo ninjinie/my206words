@@ -188,7 +188,9 @@ function stripSpaces() {
 input.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.isComposing) closeInput(true);
 });
-input.addEventListener('blur', () => closeInput(true));
+input.addEventListener('blur', () => {
+    if (!pickingFor) closeInput(true);     // picking a custom color must not close the input
+});
 input.addEventListener('input', (event) => {
     if (!event.isComposing) stripSpaces();                // never touch the text mid-composition
 });
@@ -286,15 +288,14 @@ function applyRotation(label) {
 
 // ---------- the text settings menu ----------
 
-// extra rows, built here so no page's HTML has to change
+// ---------- the text settings menu ----------
+// buttons: size, bold, italic, color, spacing. Rotate with the circle handle, move by dragging.
+settings.querySelectorAll('.tilt-left, .tilt-right').forEach(button => button.remove());
+
 const colorRow = document.createElement('div');
 colorRow.className = 'settings-row';
 colorRow.hidden = true;
-
-const moveRow = document.createElement('div');
-moveRow.className = 'settings-row';
-
-settings.append(colorRow, moveRow);
+settings.append(colorRow);
 
 function openSettings(label) {
     styledLabel = label;
@@ -323,21 +324,6 @@ function cycle(prop, values) {
     styledLabel.style[prop] = values[(i + 1) % values.length];
 }
 
-function tilt(degrees) {
-    styledLabel.dataset.tilt = parseFloat(styledLabel.dataset.tilt || 0) + degrees;
-    applyRotation(styledLabel);
-}
-
-// move the word a small step, but never out of its bone
-function nudge(dx, dy) {
-    const label = styledLabel;
-    const bone = document.getElementById(label.dataset.bone);
-    const step = (parseFloat(label.style.fontSize) || MIN_FONT) * 0.4;
-    const x = parseFloat(label.dataset.cx) + dx * step;
-    const y = parseFloat(label.dataset.cy) + dy * step;
-    if (bone.isPointInFill(new DOMPoint(x, y))) moveWord(label, x, y);
-}
-
 // wires one settings button: remember the word for Undo, then run the change
 function onSettingsButton(button, action) {
     button.addEventListener('click', () => {
@@ -360,8 +346,6 @@ onSettings('.font-size', () => {
 onSettings('.letter-spacing', () => cycle('letterSpacing', ['0px', '1px', '2px', '3px']));
 onSettings('.bold', () => cycle('fontWeight', ['bold', 'normal']));
 onSettings('.italic', () => cycle('fontStyle', ['italic', 'normal']));
-onSettings('.tilt-left', () => tilt(-5));
-onSettings('.tilt-right', () => tilt(5));
 
 // "A" opens the row of word colors
 const colorBtn = settings.querySelector('.underline');
@@ -380,15 +364,34 @@ WORD_COLORS.forEach(value => {
     onSettingsButton(swatch, () => { styledLabel.style.fill = value; });
 });
 
-// arrows move the word
-[['←', -1, 0, 'Move left'], ['→', 1, 0, 'Move right'],
- ['↑', 0, -1, 'Move up'], ['↓', 0, 1, 'Move down']].forEach(([text, dx, dy, title]) => {
-    const button = document.createElement('button');
-    button.textContent = text;
-    button.title = title;
-    moveRow.append(button);
-    onSettingsButton(button, () => nudge(dx, dy));
+// any color: the same rainbow wheel as the page's color column
+const wordWheel = document.createElement('label');
+wordWheel.className = 'word-wheel';
+wordWheel.title = 'Any color';
+const wordPicker = document.createElement('input');
+wordPicker.type = 'color';
+wordPicker.value = '#ff0000';
+wordWheel.append(wordPicker);
+colorRow.append(wordWheel);
+
+let pickingFor = null;           // the word being colored while the color window is open
+
+wordPicker.addEventListener('click', () => {
+    if (!styledLabel) return;
+    pickingFor = styledLabel;
+    rememberLabel(styledLabel.dataset.bone);           // one Undo step for the whole pick
 });
+wordPicker.addEventListener('input', () => {
+    if (pickingFor) pickingFor.style.fill = wordPicker.value;   // live preview while choosing
+});
+
+function stopPicking() {
+    if (!pickingFor) return;
+    pickingFor = null;
+    if (selectedBone !== null) input.focus();          // keep the menu usable afterwards
+}
+wordPicker.addEventListener('change', stopPicking);
+window.addEventListener('focus', () => setTimeout(stopPicking, 0));   // color window closed
 
 // ---------- rotation handle: drag the circle to rotate the word (Shift = 15° steps) ----------
 const handleLine = make('line', { class: 'rotate-line' });
@@ -521,24 +524,19 @@ function toggleHidden(id) {
 hideBtn.addEventListener('click', () => setHiding(!hiding));
 
 // ---------- download ----------
-// ---------- download ----------
+// ---------- download: a 4:5 poster with the region name on top and the footer below ----------
 function fileName() {
     return document.querySelector('.page-header p').textContent.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
-// Copy of the SVG with everything an exported file needs written into it.
-// The labels already show only the first letter of hidden words, so the full word never reaches the file.
-function buildExportSvg(background, scale) {
+// copy of the drawing with everything a file needs written into it
+// (hidden words already show only their first letter, so the full word never reaches the file)
+function buildExportArt() {
     const clone = svg.cloneNode(true);
-    const vb = svg.viewBox.baseVal;
     const font = getComputedStyle(svg.querySelector('.bone-word')).fontFamily;
 
     clone.querySelectorAll('.rotate-handle, .rotate-line').forEach(el => el.remove());   // editing tools stay out
-
-    // widen the canvas sideways; the height stays exactly as it was
-    const x = vb.x - SIDE_PADDING;
-    const w = vb.width + 2 * SIDE_PADDING;
-    clone.setAttribute('viewBox', `${x} ${vb.y} ${w} ${vb.height}`);
+    clone.removeAttribute('class');
 
     clone.querySelectorAll('text').forEach(t => {
         if (!t.textContent) {
@@ -551,17 +549,27 @@ function buildExportSvg(background, scale) {
         t.setAttribute('fill', '#000');                    // an inline color from the menu still wins
         t.setAttribute('stroke', 'none');
     });
-
-    clone.removeAttribute('class');
-    clone.setAttribute('width', w * scale);
-    clone.setAttribute('height', vb.height * scale);
-
-    if (background) {
-        const rect = make('rect', { x, y: vb.y, width: w, height: vb.height, fill: background });
-        clone.insertBefore(rect, clone.firstChild);
-    }
     return clone;
 }
+
+downloadBtn.addEventListener('click', () => {
+    setColor(null);
+    setHiding(false);
+    dialog.showModal();
+});
+
+dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) { dialog.close(); return; }     // click on the dark backdrop
+    const format = event.target.dataset.format;
+    if (!format || format === 'cancel') { dialog.close(); return; }
+    dialog.close();
+
+    const title = document.querySelector('.page-header p').textContent.trim();
+    const poster = format === 'svg'
+        ? makePoster(buildExportArt(), title, null, 1)                 // transparent
+        : makePoster(buildExportArt(), title, PAPER, POSTER_SCALE);    // paper background
+    exportSvg(poster, format, fileName());
+});
 
 downloadBtn.addEventListener('click', () => {
     setColor(null);

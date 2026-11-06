@@ -193,3 +193,77 @@ async function exportSvg(clone, format, name) {
     const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
     canvas.toBlob(blob => saveFile(blob, name + '.' + format), mime, 0.92);
 }
+
+// =====================================================================
+// footer on every page
+// =====================================================================
+const FOOTER_TEXT = 'I am made up of 206 words';
+
+(function addFooter() {
+    const container = document.querySelector('.container');
+    if (!container || container.querySelector('.site-footer')) return;
+    const footer = document.createElement('p');
+    footer.className = 'site-footer';
+    footer.textContent = FOOTER_TEXT;
+    container.append(footer);
+})();
+
+// =====================================================================
+// download poster: 4:5, title on top, drawing in the middle, footer at the bottom
+// =====================================================================
+const POSTER_W = 1000;
+const POSTER_H = 1250;           // 4:5
+const POSTER_SCALE = 4;          // PNG/JPG are 4000 x 5000 pixels
+
+// art = a copy of the drawing's <svg> (with its viewBox), title = text for the top
+function makePoster(art, title, background, scale) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const poster = document.createElementNS(NS, 'svg');
+    poster.setAttribute('xmlns', NS);
+    poster.setAttribute('viewBox', `0 0 ${POSTER_W} ${POSTER_H}`);
+    poster.setAttribute('width', POSTER_W * scale);
+    poster.setAttribute('height', POSTER_H * scale);
+
+    if (background) {
+        const rect = document.createElementNS(NS, 'rect');
+        rect.setAttribute('width', POSTER_W);
+        rect.setAttribute('height', POSTER_H);
+        rect.setAttribute('fill', background);
+        poster.append(rect);
+    }
+
+    const header = document.querySelector('.page-header p');
+    const footerEl = document.querySelector('.site-footer');
+    const titleFont = getComputedStyle(header || document.body).fontFamily;
+    const footerFont = getComputedStyle(footerEl || document.body).fontFamily;
+
+    function addText(text, y, size, font) {
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', POSTER_W / 2);
+        t.setAttribute('y', y);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'middle');
+        t.setAttribute('font-size', size);
+        t.setAttribute('font-family', font);
+        t.setAttribute('fill', '#000');
+        t.setAttribute('letter-spacing', size * 0.04);
+        t.textContent = text;
+        poster.append(t);
+    }
+
+    if (title) addText(title, 110, 44, titleFont);
+
+    // the drawing, scaled to fit between title and footer, centred, never stretched
+    const margin = 90;
+    const top = 190;
+    const bottom = POSTER_H - 160;
+    art.setAttribute('x', margin);
+    art.setAttribute('y', top);
+    art.setAttribute('width', POSTER_W - 2 * margin);
+    art.setAttribute('height', bottom - top);
+    art.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    poster.append(art);
+
+    addText(FOOTER_TEXT, POSTER_H - 80, 30, footerFont);
+    return poster;
+}

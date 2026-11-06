@@ -402,17 +402,16 @@ window.addEventListener('pageshow', (event) => {
 
 
 // =====================================================================
-// 4. DOWNLOAD THE FULL SKELETON, EXACTLY AS IT LOOKS NOW
+// 4. DOWNLOAD: 4:5 poster with the title, the skeleton as it looks now, and the footer
 // =====================================================================
 const indexDownloadBtn = document.querySelector('.download-btn');
 const indexDialog = document.getElementById('downloadDialog');
 const INDEX_PAPER = '#EFE4CB';    // same as the page background
-const INDEX_SCALE = 6;            // the index SVG is small, so images are drawn 6x bigger to stay sharp
 const INDEX_FILE = 'i-am-made-up-of-206-words';
 
-function buildIndexSvg(background, scale) {
+// copy of the skeleton exactly as it looks on screen
+function buildIndexArt() {
     const clone = skeleton.cloneNode(true);
-    const vb = skeleton.viewBox.baseVal;
     const wordsOff = skeleton.classList.contains('no-words');
     const outlinesOff = skeleton.classList.contains('no-outline');
 
@@ -444,14 +443,6 @@ function buildIndexSvg(background, scale) {
     clone.querySelectorAll('#index-words text').forEach(t => {
         if (font) t.setAttribute('font-family', font);
     });
-
-    clone.setAttribute('width', vb.width * scale);
-    clone.setAttribute('height', vb.height * scale);
-
-    if (background) {
-        const rect = make('rect', { x: vb.x, y: vb.y, width: vb.width, height: vb.height, fill: background });
-        clone.insertBefore(rect, clone.firstChild);
-    }
     return clone;
 }
 
@@ -461,10 +452,54 @@ if (indexDownloadBtn && indexDialog) {
     indexDialog.addEventListener('click', (event) => {
         if (event.target === indexDialog) { indexDialog.close(); return; }   // click on the dark backdrop
         const format = event.target.dataset.format;
-        if (!format) return;
+        if (!format || format === 'cancel') { indexDialog.close(); return; }
         indexDialog.close();
-        if (format === 'svg') exportSvg(buildIndexSvg(null, 1), 'svg', INDEX_FILE);
-        if (format === 'png') exportSvg(buildIndexSvg(INDEX_PAPER, INDEX_SCALE), 'png', INDEX_FILE);
-        if (format === 'jpg') exportSvg(buildIndexSvg(INDEX_PAPER, INDEX_SCALE), 'jpg', INDEX_FILE);
+
+        const title = titleEl ? titleEl.textContent.trim() : '';
+        const poster = format === 'svg'
+            ? makePoster(buildIndexArt(), title, null, 1)
+            : makePoster(buildIndexArt(), title, INDEX_PAPER, POSTER_SCALE);
+        exportSvg(poster, format, INDEX_FILE);
+    });
+}
+
+
+// =====================================================================
+// 5. EDITABLE TITLE (saved in this browser)
+// =====================================================================
+const titleEl = document.querySelector('.page-header p');
+
+if (titleEl) {
+    titleEl.contentEditable = 'true';
+    titleEl.spellcheck = false;
+    titleEl.textContent = readStore().title || '';      // empty shows the "Title" placeholder
+
+    function saveTitle() {
+        const store = readStore();
+        store.title = titleEl.textContent.trim();
+        writeStore(store);
+    }
+
+    titleEl.addEventListener('input', saveTitle);
+
+    // one line only: Enter finishes typing
+    titleEl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.isComposing) {
+            event.preventDefault();
+            titleEl.blur();
+        }
+    });
+
+    // pasting keeps only the text, not its formatting
+    titleEl.addEventListener('paste', (event) => {
+        event.preventDefault();
+        const text = (event.clipboardData.getData('text/plain') || '').replace(/\s+/g, ' ');
+        document.execCommand('insertText', false, text);
+    });
+
+    // clicking empty space after typing leaves the title cleanly
+    titleEl.addEventListener('blur', () => {
+        if (!titleEl.textContent.trim()) titleEl.textContent = '';   // brings the placeholder back
+        saveTitle();
     });
 }
