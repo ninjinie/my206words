@@ -1,3 +1,17 @@
+// Same tab icon (favicon) on every page
+(function () {
+    const FAVICON = 'favicon.png';
+    for (const rel of ['icon', 'apple-touch-icon']) {
+        let link = document.querySelector(`link[rel="${rel}"]`);
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = rel;
+            document.head.appendChild(link);
+        }
+        link.href = FAVICON;
+    }
+})();
+
 // =====================================================================
 // shared.js: used by every page (with global.js) and by index.js
 // =====================================================================
@@ -35,7 +49,56 @@ const SHARED_BONES = {
     'occipital bone': [
         ['Facial_Bones_Right_View.html', 'occipital bone (1)'],
         ['Facial_Bones_Left_View.html', 'occipital bone (1)']
-    ]
+    ],
+        // paired bones: each side view shows that side's bone from the front view
+    'left lacrimal bone': [
+        ['Facial_Bones_Front_View.html', 'lacrimanal bones - left'],
+        ['Facial_Bones_Left_View.html', 'lacrimal bone (2)']
+    ],
+    'right lacrimal bone': [
+        ['Facial_Bones_Front_View.html', 'lacrimanal bones - right'],
+        ['Facial_Bones_Right_View.html', 'lacrimal bone (2)']
+    ],
+    'left maxilla': [
+        ['Facial_Bones_Front_View.html', 'maxilla - left'],
+        ['Facial_Bones_Left_View.html', 'maxilla (2)']
+    ],
+    'right maxilla': [
+        ['Facial_Bones_Front_View.html', 'maxilla - right'],
+        ['Facial_Bones_Right_View.html', 'maxilla (2)']
+    ],
+    'left nasal bone': [
+        ['Facial_Bones_Front_View.html', 'nasal bones - left'],
+        ['Facial_Bones_Left_View.html', 'nasal bone (2)']
+    ],
+    'right nasal bone': [
+        ['Facial_Bones_Front_View.html', 'nasal bones - right'],
+        ['Facial_Bones_Right_View.html', 'nasal bone (2)']
+    ],
+    'left parietal bone': [
+        ['Facial_Bones_Front_View.html', 'parietal bones - left'],
+        ['Facial_Bones_Left_View.html', 'parietal bone (2)']
+    ],
+    'right parietal bone': [
+        ['Facial_Bones_Front_View.html', 'parietal bones - right'],
+        ['Facial_Bones_Right_View.html', 'parietal bone (2)']
+    ],
+    'left temporal bone': [
+        ['Facial_Bones_Front_View.html', 'temporal bones - left'],
+        ['Facial_Bones_Left_View.html', 'temporal bone (2)']
+    ],
+    'right temporal bone': [
+        ['Facial_Bones_Front_View.html', 'temporal bones - right'],
+        ['Facial_Bones_Right_View.html', 'temporal bone (2)']
+    ],
+    'left zygomatic bone': [
+        ['Facial_Bones_Front_View.html', 'zygomatic bones - left'],
+        ['Facial_Bones_Left_View.html', 'zygomatic bone (2)']
+    ],
+    'right zygomatic bone': [
+        ['Facial_Bones_Front_View.html', 'zygomatic bones - right'],
+        ['Facial_Bones_Right_View.html', 'zygomatic bone (2)']
+    ],
 };
 
 // 'Page.html#bone id' -> shared name
@@ -138,7 +201,7 @@ function embeddedFontCss() {
                         reader.readAsDataURL(blob);
                     });
                     return `@font-face { font-family: "Dashtseden"; src: url(${data}) format("${format}"); ` +
-                           `unicode-range: U+1800-18AF, U+11660-1167F, U+202F; }`;
+                        `unicode-range: U+1800-18AF, U+11660-1167F, U+202F; }`;
                 } catch (error) { }
             }
             console.warn('Dashtseden font file not found in /fonts: downloads will use a fallback font');
@@ -267,3 +330,222 @@ function makePoster(art, title, background, scale) {
     addText(FOOTER_TEXT, POSTER_H - 80, 30, footerFont);
     return poster;
 }
+
+// "Happy writing" notice after downloads
+(function () {
+    const notice = document.createElement('dialog');
+    notice.id = 'safetyNotice';
+    notice.innerHTML = `
+        <p>Hi, happy writing.</p>
+        <p>If you are going to share your words on social media, make sure to hide any sensitive information.</p>
+        <p>Be safe, have fun :))</p>
+        <button type="button">OK</button>
+    `;
+    document.body.appendChild(notice);
+
+    notice.querySelector('button').addEventListener('click', () => notice.close());
+
+    // Close when clicking outside the box
+    notice.addEventListener('click', (e) => {
+        if (e.target === notice) notice.close();
+    });
+
+    // Show it after a real download choice
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#downloadDialog button[data-format]');
+        if (!btn || btn.dataset.format === 'cancel') return;
+
+        // Small delay so the download dialog closes first
+        setTimeout(() => notice.showModal(), 300);
+    });
+})();
+
+// Clickable word list from the counter
+(function () {
+    const countEl = document.getElementById('count');
+    if (!countEl) return;
+
+    const prettify = (s) => s.replace(/\.html$/i, '').replace(/_/g, ' ');
+
+    function getEntries() {
+        let saved;
+        try {
+            saved = JSON.parse(localStorage.getItem('206words')) || {};
+        } catch {
+            return [];
+        }
+        const bones = saved.bones || {};
+
+        return Object.entries(bones)
+            .filter(([, v]) => v.word && v.word.trim())   // skip paint-only entries
+            .map(([key, v]) => {
+                const page = v.page || key.split('#')[0];
+                const bone = (v.data && v.data.bone) || key.split('#')[1] || '';
+                return { page, bone, word: v.word.trim(), hidden: v.hidden };
+            });
+    }
+
+    // Build the dialog
+    const dialog = document.createElement('dialog');
+    dialog.id = 'wordList';
+    document.body.appendChild(dialog);
+
+    function render() {
+        const entries = getEntries();
+
+        if (!entries.length) {
+            dialog.innerHTML = `
+                <p>No words written yet.</p>
+                <button type="button" class="close">Close</button>`;
+        } else {
+            // Group by page
+            const groups = {};
+            entries.forEach(e => (groups[e.page] ||= []).push(e));
+
+            const sections = Object.entries(groups).map(([page, items]) => `
+                <section>
+                    <h3><a href="${page}">${prettify(page)}</a></h3>
+                    <ul>
+                        ${items.map(e => `
+                            <li>
+                                <span class="bone">${prettify(e.bone)}</span>
+                                <span class="word">${e.hidden ? e.word[0] + '…' : escapeHTML(e.word)}</span>
+                            </li>`).join('')}
+                    </ul>
+                </section>`).join('');
+
+            dialog.innerHTML = `
+                <p class="list-title">${entries.length} of 206 words</p>
+                ${sections}
+                <button type="button" class="close">Close</button>`;
+        }
+
+        dialog.querySelector('.close').addEventListener('click', () => dialog.close());
+    }
+
+    function escapeHTML(s) {
+        return s.replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    countEl.style.cursor = 'pointer';
+    countEl.title = 'See your words';
+    countEl.addEventListener('click', () => {
+        render();
+        dialog.showModal();
+    });
+
+    // Click outside to close
+    dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) dialog.close();
+    });
+})();
+
+// Info mode: show bone names on hover
+(function () {
+    const stage = document.querySelector('.stage svg');
+    const header = document.querySelector('.page-header');
+    if (!stage || !header) return;
+
+    const NOT_BONES = /disc|vector|cartilage|^cc-|teeth/i;
+
+    function clean(name) {
+        return name
+            .replace(/_\d+$/, '')
+            .replace(/\s*\(\d+\)/, '')
+            .replace(/_/g, ' ')
+            .trim()
+            .replace(/^./, c => c.toUpperCase());
+    }
+
+    function labelFor(path) {
+        const bone = clean(path.id);
+        const group = path.parentElement.closest('g[id]');
+        const groupName = group ? clean(group.id) : '';
+        const useGroup = groupName && !/^(left|right)_?/i.test(group.id) && groupName !== bone;
+        return useGroup ? `${groupName} · ${bone}` : bone;
+    }
+
+    // Info button
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'info-btn';
+    btn.textContent = 'i';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Show bone names');
+    btn.dataset.tip = "Show labels";
+
+    // Put it right after Undo (or Hide if there's no Undo)
+    const anchor = document.querySelector('.undo-btn') || document.querySelector('.hide-btn');
+    if (anchor) {
+        anchor.insertAdjacentElement('afterend', btn);
+    } else {
+        header.appendChild(btn);
+    }
+
+    // Line it up just to the right of Undo
+    function placeInfoBtn() {
+        if (!anchor) return;
+        btn.style.position = 'absolute';
+        btn.style.bottom = (anchor.offsetHeight - btn.offsetHeight) / 2 + 'px';
+        btn.style.left = (anchor.offsetLeft + anchor.offsetWidth + 10) + 'px';
+    }
+
+    placeInfoBtn();
+    // Re-place it whenever Undo or the ⓘ changes size (font loading, zoom, resizing the window)
+    if (anchor) {
+        const observer = new ResizeObserver(placeInfoBtn);
+        observer.observe(anchor);
+        observer.observe(btn);
+    }
+    window.addEventListener('resize', placeInfoBtn); // re-measure once fonts load
+
+    // Tooltip that follows the cursor
+    const tip = document.createElement('div');
+    tip.className = 'bone-tip';
+    tip.hidden = true;
+    document.body.appendChild(tip);
+
+    let infoMode = false;
+
+    btn.addEventListener('click', () => {
+        infoMode = !infoMode;
+        btn.classList.toggle('active', infoMode);
+        btn.setAttribute('aria-pressed', String(infoMode));
+        document.body.classList.toggle('info-mode', infoMode);
+        if (!infoMode) tip.hidden = true;
+    });
+
+    stage.addEventListener('pointermove', (e) => {
+        if (!infoMode) return;
+        const path = e.target.closest('path[id]');
+        if (!path || NOT_BONES.test(path.id)) { tip.hidden = true; return; }
+        tip.textContent = labelFor(path);
+        tip.hidden = false;
+        tip.style.left = `${e.clientX + 12}px`;
+        tip.style.top = `${e.clientY + 12}px`;
+    });
+
+    stage.addEventListener('pointerleave', () => { tip.hidden = true; });
+
+    stage.addEventListener('pointerdown', (e) => {
+        if (infoMode && e.pointerType !== 'mouse') {
+            setTimeout(() => { tip.hidden = true; }, 1500);
+        }
+    });
+})();
+
+// Line the info button up just to the right of Undo
+function placeInfoBtn() {
+    if (!anchor) return;
+    const style = getComputedStyle(anchor);
+    if (style.position !== 'absolute' && style.position !== 'fixed') return; // normal flow: nothing to do
+
+    btn.style.position = style.position;
+    btn.style.top = (anchor.offsetTop + (anchor.offsetHeight - btn.offsetHeight) / 2) + 'px';
+    btn.style.left = (anchor.offsetLeft + anchor.offsetWidth + 8) + 'px';
+}
+
+placeInfoBtn();
+window.addEventListener('resize', placeInfoBtn);

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Right Hand</title>
+    <title>Left Leg</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap">
 </head>
 
 <body>
@@ -13,13 +14,11 @@
 
         <div class="page-header">
             <a href="index.html">Back</a>
-            <p>Right Hand</p>
-            <small>26/206</small>
+            <p>Left Leg</p>
+            <small id="count"></small>
         </div>
 
         <div class="stage">
-
-
             <svg xmlns="http://www.w3.org/2000/svg" width="756" height="469" fill="none" viewBox="0 0 756 469">
                 <g id="palatine bones" stroke="#000" stroke-width=".5">
                     <path id="left_palatine_bone"
@@ -28,21 +27,48 @@
                         d="M414.578 424.808c22.722-16.84 25.34-36.145 42-59 10.443-14.328 11.783-27.4 27-36.5 15.239-9.114 27.81-10.948 45-6.5 19.315 4.998 22.447 21.863 39 33 13.847 9.317 34.794 4.031 37.5 20.5 2.586 15.74-21.835 16.103-26 31.5-5.807 21.466 19.5 53.5 19.5 53.5h6.5c16.22-2.041 8.397-25.509 20.5-36.5 15.131-13.741 29.088-15.95 49.5-17 19.353-.995 34.872 24.278 48.5 10.5 6.094-6.162 2.641-14.114 8.5-20.5 6.795-7.407 25.037-.567 23.5-10.5-1.16-7.494-9.345-7.366-16-11-11.218-6.126-20.539-3.156-31-10.5-11.891-8.348-16.164-16.696-22-30-13.082-29.821 18.634-52.222 8-83-4.944-14.308-11.989-20.357-19.5-33.5-9.542-16.697-18.512-24.569-24-43-7.189-24.141 7.341-40.405 0-64.5-10.246-33.632-24.869-59.565-59-68-14.217-3.514-22.869-.635-37.5 0-27.923 1.21-43.749 15.205-71 9-23.805-5.42-29.599-30.717-54-31.5-16.301-.523-25.561 4.419-40 12s-13.25 16.4-14.5 29c-.878 8.849 4.607 13.677 3.5 22.5-1.111 8.853-6 14-9 21-1.903 4.44-.711 13.408 3 16.5 6 5 12.445 9.914 13.5 22 .875 10.027-4.5 14-7.5 22-4.47 11.919 18.251 16.193 15 28.5-2.625 9.936-11.535 7.825-15 17.5-2.201 6.145-1.156 12.247-.057 18.67l.057.33c2.181 12.749 9.007 10.72 11 23.5 1.83 11.735-1.126 19.155-2 31-.704 9.542 1.864 13.116 0 22.5-1.675 8.429-1.5 10.5-6 18.5-1.628 2.893-5.425 7.708-5 11 1.429 11.065 9.5 10.5 15 22.5 2.034 4.438.5 9.5-2 17s-14 12.5-23 27.5c-9.665 16.109 25.277 36.84 48 20Z" />
                 </g>
             </svg>
+            <input id="inputField" type="text" placeholder="Enter a word...">
+            <div class="text-settings" id="textSettings">
+                <button class="font-size">15</button>
+                <button class="bold">B</button>
+                <button class="italic">I</button>
+                <button class="underline">A</button>
+                <button class="letter-spacing"><span>T</span><span class="arrows">↔</span></button>
+                <button class="tilt-left">↺</button>
+                <button class="tilt-right">↻</button>
+            </div>
+
 
         </div>
 
         <div class="colors">
+            <div class="circle" id="color-six"></div>
             <div class="circle" id="color-one"></div>
             <div class="circle" id="color-two"></div>
             <div class="circle" id="color-three"></div>
             <div class="circle" id="color-four"></div>
             <div class="circle" id="color-five"></div>
-            <div class="circle" id="color-six"></div>
+            <div class="circle" id="color-seven"></div>
+            <label class="circle wheel">
+                <input type="color" id="colorPicker" value="#ff0000">
+            </label>
         </div>
 
+
         <button class="hide-btn">Hide</button>
+        <button class="undo-btn">Undo</button>
         <button class="download-btn">Download</button>
     </div>
+    <dialog id="downloadDialog">
+        <p>Download as</p>
+        <button data-format="svg">SVG</button>
+        <button data-format="png">PNG</button>
+        <button data-format="jpg">JPG</button>
+        <button data-format="cancel">Cancel</button>
+        <p><small>Hidden words are exported as their first letter only.</small></p>
+    </dialog>
+    <script src="shared.js"></script>
+    <script src="global.js"></script>
 </body>
 
 </html>

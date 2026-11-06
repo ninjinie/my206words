@@ -181,84 +181,61 @@ a {
 .download-btn:active { transform: scale(0.98); }
 
 /* ---------- bones ---------- */
-
 .skull-menu {
-    width: min(85%, 1100px);
-    margin: 60px auto 0;
-
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-
-    column-gap: 40px;
-    row-gap: 25px;
-
-    align-items: center;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 70px 40px;            /* more space between rows and columns */
+    max-width: 1100px;
+    margin: 40px auto 0;
     justify-items: center;
 }
 
-
-/* TOP ROW */
-
-.left-skull {
-    grid-column: 1;
-    grid-row: 1;
+.skull-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
 }
 
-.front-skull {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.right-skull {
-    grid-column: 3;
-    grid-row: 1;
-}
-
-
-/* BOTTOM ROW */
-
-.left-ear {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.hyoid {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-.right-ear {
-    grid-column: 3;
-    grid-row: 2;
-}
-
-.left-skull img,
-.right-skull img {
-    width: 150px;
-    height: auto;
-    mix-blend-mode: multiply;
-}
-
-.front-skull img {
-    width: 130px;
-    height: auto;
-    mix-blend-mode: multiply;
-}
-
-.left-ear img,
-.right-ear img {
-    width: 100px;
-    height: auto;
-    mix-blend-mode: multiply;
-}
-
-.skull-menu .hyoid img {
-    width: 120px;
-    max-width: 120px;
-    height: auto;
+/* Same height for every image, regardless of its file size or shape */
+.skull-item img {
+    height: 200px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
     display: block;
     mix-blend-mode: multiply;
 }
+
+/* Bottom row slightly smaller */
+.left-ear img,
+.hyoid img,
+.palatine img,
+.right-ear img {
+    height: 140px;
+    mix-blend-mode: multiply;
+}
+
+.caption {
+    margin-top: 14px;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.skull-item:hover .caption {
+    text-decoration: underline;
+}
+
+/* Layout: 3 on top, 4 on the bottom */
+.left-skull  { grid-row: 1; grid-column: 1 / span 4; }
+.front-skull { grid-row: 1; grid-column: 5 / span 4; }
+.right-skull { grid-row: 1; grid-column: 9 / span 4; }
+
+.left-ear    { grid-row: 2; grid-column: 1 / span 3; }
+.hyoid       { grid-row: 2; grid-column: 4 / span 3; }
+.palatine    { grid-row: 2; grid-column: 7 / span 3; }
+.right-ear   { grid-row: 2; grid-column: 10 / span 3; }
 
 .text-settings {
     width: 200px;       /* overall box width */
@@ -635,3 +612,146 @@ a {
 }
 
 .contact-form button:hover { background-color: #ad90e7; }
+
+#safetyNotice {
+    border: 1px solid #000;
+    background: #ece3cc;
+    padding: 24px 28px;
+    max-width: 360px;
+    text-align: center;
+    font-family: inherit;
+}
+#safetyNotice::backdrop {
+    background: rgba(0, 0, 0, 0.25);
+}
+#safetyNotice p {
+    margin: 0 0 10px;
+}
+#safetyNotice button {
+    margin-top: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 2px 14px;
+    cursor: pointer;
+}
+
+.center {
+    text-align: center;
+}
+
+#wordList {
+    border: 1px solid #000;
+    background: #ece3cc;
+    padding: 24px 28px;
+    width: min(420px, 90vw);
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: inherit;
+}
+#wordList::backdrop {
+    background: rgba(0, 0, 0, 0.25);
+}
+#wordList .list-title {
+    text-align: center;
+    margin: 0 0 16px;
+}
+#wordList h3 {
+    font-size: 1rem;
+    font-weight: normal;
+    margin: 16px 0 6px;
+    border-bottom: 1px solid #0003;
+}
+#wordList ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#wordList li {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+#wordList .bone {
+    text-transform: capitalize;
+    opacity: 0.7;
+}
+#wordList .word {
+    font-style: italic;
+}
+#wordList .close {
+    display: block;
+    margin: 18px auto 0;
+    font-family: inherit;
+    padding: 2px 14px;
+}
+
+.count-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ---------- info button (next to Undo) ---------- */
+.info-btn {
+    position: absolute;
+    bottom: 0;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #000;
+    border-radius: 50%;
+    background: transparent;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.info-btn.active {
+    background: #000;
+    color: #EFE4CB;
+}
+
+/* hover message, opens upward */
+.info-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 130%;
+    left: 0;
+    width: max-content;
+    max-width: 220px;
+    padding: 6px 10px;
+    background: #EFE4CB;
+    border: 1px solid #000;
+    font-style: normal;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    text-align: left;
+    white-space: normal;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 1000;
+}
+
+.info-btn:hover::after,
+.info-btn:focus-visible::after {
+    opacity: 1;
+}
+
+/* bone name tooltip */
+.bone-tip {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none;
+    background: #EFE4CB;
+    border: 1px solid #000;
+    padding: 3px 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.info-mode .stage svg path {
+    cursor: help;
+}
