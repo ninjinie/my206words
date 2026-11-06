@@ -73,7 +73,7 @@ backLink.addEventListener('click', (event) => {
     if (document.referrer.startsWith(location.origin)) {   // we arrived from one of our own pages
         event.preventDefault();
         history.back();
-    }                                                      // otherwise the normal link (index.html) runs
+    }                                                      // otherwise the normal link (./, the home page) runs
 });
 
 // ---------- undo ----------
