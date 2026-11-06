@@ -1,43 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact</title>
-    <link rel="stylesheet" href="style.css" type="text/css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mongolian&display=swap">
 </head>
+
 <body>
-    <script id="replace_with_navbar" src="nav.js"></script>
-    <div class="contact-section">
-    <p>
-        Hi, feel free to drop a review or bugs in the form below. 
-        The website is not perfect. But I will be making improvements to it
-        gradually. I am open to collaborations, in that case, I think reaching out via
-        Substack would be faster. 
-    </p>
-    <p>
-        Some limitations I am going to work on: 
-    </p>
+    <div class="container">
+        <script id="replace_with_navbar" src="nav.js"></script>
 
-    <p>
-        <ul>
-            <li>Accessibility: Font size, contrast etc.</li>
-            <li>Inclusion: Customizing the number of bones. (For people who don't have complete 206 bones)</li>
-            <li>Speed: Increase speed performance </li>
-            <li>Sharing: I would like an option to share the website rather than just downloading the words. But at the same time, I do not want to deal with storing people's passwords, emails and information.</li>
-            <li>Design: I want to allow traditional Mongolian input for the words. It is vertically written thus would need different kind of design for the text input field. </li>
+        <main class="contact">
+            <p>
+                Hi, feel free to drop a review or bugs in the form below. The website is not perfect.
+                But I will be making improvements to it gradually. I am open to collaborations, in that case,
+                I think reaching out via Substack would be faster.
+            </p>
 
-        </ul>
-    </p>
+            <p>Some limitations I am going to work on:</p>
 
-    <form>
-        <label for="fname">First name:</label><br>
-        <input type="text" id="fname" name="fname"><br>
-        <label for="email">Email:</label><br>
-        <input type="text" id="email" name="email"><br>
-        <label for="feedback">Feedback: </label><br>
-        <input type="text" class="large-input" id="feedback" name="feedback" placeholder="Type what were you trying to and what did not work etc">
-    </form>
+            <ul>
+                <li>Accessibility: Font size, contrast etc.</li>
+                <li>Inclusion: Customizing the number of bones. (For people who don't have complete 206 bones)</li>
+                <li>Speed: Increase speed performance</li>
+                <li>Sharing: I would like an option to share the website rather than just downloading the words.
+                    But at the same time, I do not want to deal with storing people's passwords, emails and
+                    information.</li>
+                <li>Design: I want to allow traditional Mongolian input for the words. It is vertically written
+                    thus would need different kind of design for the text input field.</li>
+            </ul>
+
+            <form class="contact-form" name="contact" method="POST" data-netlify="true"
+                  enctype="multipart/form-data">
+                <input type="hidden" name="form-name" value="contact">
+
+                <label>
+                    First name: <span class="optional">(optional)</span>
+                    <input type="text" name="name" autocomplete="given-name">
+                </label>
+
+                <label>
+                    Email: <span class="optional">(optional, only if you'd like a reply)</span>
+                    <input type="email" name="email" autocomplete="email">
+                </label>
+
+                <label>
+                    This is about:
+                    <select name="topic">
+                        <option>Feedback</option>
+                        <option>A problem or bug</option>
+                        <option>Collaboration</option>
+                        <option>Something else</option>
+                    </select>
+                </label>
+
+                <label>
+                    Feedback:
+                    <textarea name="message" rows="6" required
+                              placeholder="Type what you were trying to do and what happened"></textarea>
+                </label>
+
+                <label>
+                    Attachment: <span class="optional">(optional, e.g. a screenshot)</span>
+                    <input type="file" name="attachment" accept="image/*,.pdf">
+                </label>
+
+                <button type="submit">Send</button>
+            </form>
+        </main>
     </div>
+
+    <script src="shared.js"></script>
 </body>
+
 </html>

@@ -24,9 +24,10 @@ const outlineBtn = document.querySelector('.outline-btn');
 let presenting = false;
 
 function setPresenting(on) {
+    setPaintColor(null);                         // no painting while presenting
     presenting = on;
     if (modeBtn) {
-        modeBtn.textContent = on ? 'Work' : 'Present';
+        modeBtn.textContent = on ? 'Exit present' : 'Present';
         modeBtn.classList.toggle('active', on);
     }
     if (wordsBtn) wordsBtn.hidden = !on;
@@ -39,7 +40,9 @@ function setPresenting(on) {
     }
 }
 
-if (modeBtn) modeBtn.addEventListener('click', () => setPresenting(!presenting));
+if (modeBtn) modeBtn.addEventListener('click', () => setPresenting(!presenting)
+
+);
 
 if (wordsBtn) wordsBtn.addEventListener('click', () => {
     const off = skeleton.classList.toggle('no-words');
@@ -61,12 +64,20 @@ function regionAt(event) {
 
 skeleton.addEventListener('click', (event) => {
     if (presenting) return;
+    if (paintColor) {                            // paint mode: paint instead of opening a page
+        if (!paintAt(event)) setPaintColor(null);   // clicked empty space: leave paint mode
+        return;
+    }
     const region = regionAt(event);
     if (region) window.location.href = REGION_PAGES[region.id];
 });
 
 skeleton.addEventListener('mousemove', (event) => {
     if (presenting) return;
+    if (paintColor) {
+        skeleton.style.cursor = linkAt(event) ? 'crosshair' : 'default';
+        return;
+    }
     skeleton.style.cursor = regionAt(event) ? 'pointer' : 'default';
 });
 
@@ -169,6 +180,7 @@ linkSameIds('Front View', 'Facial_Bones_Front_View.html');
 
 // chest: one index shape per rib pair, split down the middle
 linkPairs('rib.html', { sternum: 'sternum' });
+for (let n = 1; n <= 6; n++) linkPairs('rib.html', { ['CC-' + n]: 'CC-' + n });
 for (let n = 1; n <= 12; n++) {
     const bone = document.getElementById('rib-' + n);
     if (!bone) continue;
@@ -503,3 +515,84 @@ if (titleEl) {
         saveTitle();
     });
 }
+
+// =====================================================================
+// 6. PAINT BONES FROM THE INDEX (saved to the same bone as on its page)
+// =====================================================================
+const linksByBone = new Map();                   // index shape -> its links (two for a split rib)
+links.forEach(link => {
+    if (!linksByBone.has(link.bone)) linksByBone.set(link.bone, []);
+    linksByBone.get(link.bone).push(link);
+});
+
+const paintCircles = document.querySelectorAll('.colors .circle');
+const paintWheel = document.querySelector('.colors .wheel');
+const paintPicker = document.getElementById('colorPicker');
+let paintColor = null;                           // null = not painting
+
+function setPaintColor(value, circle) {
+    paintColor = value;
+    paintCircles.forEach(c => c.classList.remove('selected'));
+    if (value && circle) circle.classList.add('selected');
+    if (!value) skeleton.style.cursor = 'default';
+}
+
+document.querySelectorAll('.colors .circle:not(.wheel)').forEach(circle => {
+    circle.addEventListener('click', () => {
+        if (presenting) return;
+        const picked = getComputedStyle(circle).backgroundColor;
+        setPaintColor(paintColor === picked ? null : picked, circle);   // click again = off
+    });
+});
+
+if (paintPicker) {
+    paintPicker.addEventListener('click', () => { if (!presenting) setPaintColor(paintPicker.value, paintWheel); });
+    paintPicker.addEventListener('input', () => { if (!presenting) setPaintColor(paintPicker.value, paintWheel); });
+}
+
+function svgPointAt(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(skeleton.getScreenCTM().inverse());
+}
+
+// the bone (and for a rib, the half) under the pointer
+function linkAt(event) {
+    const p = svgPointAt(event);
+    for (const el of document.elementsFromPoint(event.clientX, event.clientY)) {
+        const list = linksByBone.get(el);
+        if (!list) continue;
+        return list.length === 1 ? list[0] : (list.find(link => onSide(link.side, p.x)) || list[0]);
+    }
+    return null;
+}
+
+// paint (or unpaint) the bone under the pointer; returns false if there was no bone
+function paintAt(event) {
+    const link = linkAt(event);
+    if (!link) return false;
+
+    const store = readStore();
+    const key = boneKey(link.page, link.id);
+    const entry = store.bones[key] || {};
+
+    if (entry.paint === paintColor) delete entry.paint;      // same color again = remove it
+    else entry.paint = paintColor;
+
+    if (Object.keys(entry).length) store.bones[key] = entry;
+    else delete store.bones[key];
+
+    writeStore(store);
+    render();
+    return true;
+}
+
+// clicking anywhere outside the bones and the color column leaves paint mode
+document.addEventListener('click', (event) => {
+    if (!paintColor) return;
+    if (event.target.closest('.colors')) return;     // choosing another color
+    if (skeleton.contains(event.target)) return;     // the skeleton's own click handler decides
+    setPaintColor(null);
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setPaintColor(null);
+});

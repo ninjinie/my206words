@@ -497,14 +497,6 @@ a {
     display: none;
 }
 
-.site-footer {
-    flex-shrink: 0;
-    text-align: center;
-    padding-top: 12px;
-    font-size: 18px;
-    letter-spacing: 0.7px;
-}
-
 /* ---------- word color: "any color" wheel in the settings menu ---------- */
 .word-wheel {
     position: relative;
@@ -566,6 +558,7 @@ a {
     margin: 0;
     padding: 2px 0;
     font-size: 18px;
+    font-style: italic;
     letter-spacing: 0.7px;
     white-space: nowrap;
     pointer-events: none;
@@ -583,3 +576,62 @@ a {
     content: 'Title';
     opacity: 0.4;
 }
+
+/* ---------- contact page ---------- */
+.contact {
+    flex: 1;                          /* fill the space between the navigation and the footer */
+    min-height: 0;                    /* lets it scroll instead of growing past the window */
+    overflow-y: auto;                 /* the page body doesn't scroll, so this area does */
+    margin: 30px auto 50px;           /* top: room below the navigation, bottom: room for the footer */
+    width: 100%;
+    max-width: 900px;
+    padding-right: 12px;              /* keeps text clear of the scrollbar */
+}
+
+.contact-form {
+    max-width: 480px;
+    margin-top: 28px;
+    padding-bottom: 20px;
+}
+
+.contact-form label {
+    display: block;
+    margin-bottom: 16px;
+}
+
+.contact-form .optional {
+    font-size: 0.85em;
+    opacity: 0.6;
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form select,
+.contact-form textarea {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    font: inherit;
+    padding: 6px 8px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.contact-form input[type="file"] {
+    display: block;
+    margin-top: 6px;
+    font: inherit;
+}
+
+.contact-form textarea {
+    resize: vertical;
+}
+
+.contact-form button {
+    font-size: medium;
+    letter-spacing: 0.7px;
+    background-color: #DCCBFF;
+    padding: 4px 18px;
+}
+
+.contact-form button:hover { background-color: #ad90e7; }
