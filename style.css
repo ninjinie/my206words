@@ -612,6 +612,15 @@ a {
 }
 
 .contact-form button:hover { background-color: #ad90e7; }
+.contact-form button:disabled { opacity: 0.6; cursor: default; }
+
+.form-status {
+    max-width: 480px;
+    min-height: 1.5em;
+}
+
+.form-status.success { color: #2e6b2e; }
+.form-status.error { color: #b00020; }
 
 #safetyNotice {
     border: 1px solid #000;
