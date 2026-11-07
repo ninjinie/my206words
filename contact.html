@@ -61,6 +61,9 @@
                               placeholder="Type what you were trying to do and what happened"></textarea>
                 </label>
 
+                <!-- spam trap: hidden from people, bots fill it in and Formspree drops the message -->
+                <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
+
                 <button type="submit">Send</button>
             </form>
 
