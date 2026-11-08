@@ -565,6 +565,31 @@ a {
     padding-right: 12px;              /* keeps text clear of the scrollbar */
 }
 
+/* ---------- about page: always-visible scrollbar + soft fade above the footer ---------- */
+.about-section::-webkit-scrollbar {
+    width: 8px;
+}
+.about-section::-webkit-scrollbar-track {
+    background: transparent;
+}
+.about-section::-webkit-scrollbar-thumb {
+    background-color: #b8ab8f;
+    border-radius: 4px;
+}
+@supports (-moz-appearance: none) {          /* Firefox only: Chrome/Safari ignore the rules above when these are set */
+    .about-section {
+        scrollbar-width: thin;
+        scrollbar-color: #b8ab8f transparent;
+    }
+}
+@media (min-width: 701px) {                  /* phones scroll the whole page, so no fade there */
+    .about-section {
+        -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
+        padding-bottom: 15vh;                /* last lines scroll above the fade */
+    }
+}
+
 .contact-form {
     max-width: 480px;
     margin-top: 28px;
