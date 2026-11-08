@@ -600,6 +600,27 @@ const picker = document.getElementById('colorPicker');
 picker.addEventListener('click', () => setColor(picker.value, wheel));
 picker.addEventListener('input', () => setColor(picker.value, wheel));
 
+// starting the wheel on a selected bone: open the picker at that bone's saved color
+// (pointerdown runs before the word input's blur clears selectedBone)
+picker.addEventListener('pointerdown', () => {
+    if (selectedBone === null) return;
+    const entry = readStore().bones[boneKey(CURRENT_PAGE, selectedBone)];
+    const saved = (entry && entry.paint) || document.getElementById(selectedBone).dataset.paint;
+    const hex = saved && colorToHex(saved);
+    if (hex) picker.value = hex;           // no color yet: keep the current default
+});
+
+// any CSS color ("rgb(...)", "red", "#abc") -> "#rrggbb", which <input type="color"> needs
+function colorToHex(value) {
+    if (!CSS.supports('color', value)) return null;
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = value;
+    const out = ctx.fillStyle;             // the browser gives "#rrggbb" or "rgba(r, g, b, a)"
+    if (/^#[0-9a-f]{6}$/i.test(out)) return out;
+    const m = out.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    return m ? '#' + m.slice(1, 4).map(n => (+n).toString(16).padStart(2, '0')).join('') : null;
+}
+
 // ---------- hide mode ----------
 function setHiding(on) {
     hiding = on;
