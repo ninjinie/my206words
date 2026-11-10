@@ -198,7 +198,6 @@ function mapWord(entry, box) {
 // downloads: embed the Dashtseden font so images look exactly like the screen
 // =====================================================================
 const FONT_FILES = [
-    ['fonts/Dashtseden.woff2', 'woff2'],
     ['fonts/Dashtseden.ttf', 'truetype']
 ];
 let fontCssCache = null;

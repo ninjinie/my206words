@@ -1,7 +1,6 @@
 @font-face {
     font-family: "Dashtseden";
-    src: url("fonts/Dashtseden.woff2") format("woff2"),
-         url("fonts/Dashtseden.ttf") format("truetype");
+    src: url("fonts/Dashtseden.ttf") format("truetype");
     unicode-range: U+1800-18AF, U+11660-1167F, U+202F;   /* only Mongolian characters use it */
     font-display: swap;
 }
