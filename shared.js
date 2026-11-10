@@ -117,7 +117,7 @@ function readStore() {
     try {
         store = JSON.parse(localStorage.getItem(STORAGE_KEY));
     } catch (error) { }
-    if (store && store.bones) return store;
+    if (store && store.bones) return splitOldCartilage(store);
 
     // first run: move words saved by the earlier version ("206words:Page.html") into the new format
     store = { bones: {} };
@@ -137,6 +137,24 @@ function readStore() {
             }
         }
     } catch (error) { }
+    return splitOldCartilage(store);
+}
+
+// costal cartilage used to be one shape per level (rib.html#CC-1); each side is now its own shape
+function splitOldCartilage(store) {
+    for (let n = 1; n <= 6; n++) {
+        const oldKey = 'rib.html#CC-' + n;
+        const old = store.bones[oldKey];
+        if (!old) continue;
+        for (const side of ['right', 'left']) {
+            const key = `rib.html#CC-${n}-${side}`;
+            const entry = store.bones[key] || {};
+            if (old.paint && !entry.paint) entry.paint = old.paint;
+            if (side === 'right' && old.word && !entry.word) Object.assign(entry, old, { paint: entry.paint });
+            if (Object.keys(entry).length) store.bones[key] = entry;
+        }
+        delete store.bones[oldKey];
+    }
     return store;
 }
 

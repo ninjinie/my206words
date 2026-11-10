@@ -180,7 +180,12 @@ linkSameIds('Front View', 'Facial_Bones_Front_View.html');
 
 // chest: one index shape per rib pair, split down the middle
 linkPairs('rib.html', { sternum: 'sternum' });
-for (let n = 1; n <= 6; n++) linkPairs('rib.html', { ['CC-' + n]: 'CC-' + n });
+for (let n = 1; n <= 6; n++) {
+    const bone = document.getElementById('CC-' + n);
+    if (!bone) continue;
+    links.push({ bone, page: 'rib.html', id: `CC-${n}-right`, side: 'left' });   // body's right = screen left
+    links.push({ bone, page: 'rib.html', id: `CC-${n}-left`, side: 'right' });
+}
 for (let n = 1; n <= 12; n++) {
     const bone = document.getElementById('rib-' + n);
     if (!bone) continue;
